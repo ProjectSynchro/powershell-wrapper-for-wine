@@ -10,7 +10,7 @@ For example 'powershell.exe -Nologo 1+2' is internally reworked to 'pwsh.exe -No
 If the command is still incompatible with pwsh.exe there's an option to replace (parts of) the command to fix things (in profile.ps1).
 See profile.ps1 for an example: the ambigous command 'measure -s' (for which pwsh will throw an error) is replaced with 'measure -sum'
 
-For fun I changed code from standard main(argc,*argv[]) to something like (this)[https://nullprogram.com/blog/2016/01/31/]
+For fun I changed code from standard main(argc,*argv[]) to something like [this](https://nullprogram.com/blog/2016/01/31/])
 # Compiling
 
 You'll need a basic mingw toolchain, for Fedora see: https://fedoraproject.org/wiki/MinGW/Tutorial 
@@ -19,19 +19,19 @@ You'll need a basic mingw toolchain, for Fedora see: https://fedoraproject.org/w
 
 - Compile the 32 and 64 bit binaries with the following:
 
-```mingw64-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell64.exe
- ```
+`mingw64-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell64.exe
+`
 
-```mingw32-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell32.exe
- ```
+`mingw32-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell32.exe
+`
 
 # Install 
 
-**TODO** 
+**TODO, this section isn't quite accurate yet.** 
 
 Powershell Core (and ConEmu) are downloaded and installed at first invokation of powershell (i.e. wine powershell`)
 (ConEmu is installed to work around bug https://bugs.winehq.org/show_bug.cgi?id=49780)
-For an unattended install you could do (thanks brunoais for the tip):
+
 
 Assuming `~/.wine` is where your wineprefix is
   

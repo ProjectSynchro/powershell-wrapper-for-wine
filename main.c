@@ -76,39 +76,6 @@ int mainCRTStartup(void)
     argv = CommandLineToArgvW ( GetCommandLineW(), &argc);
     ExpandEnvironmentStringsW(L"%ProgramW6432%\\Powershell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH+1);
 
-    /* Download and Install */
-    if ( GetFileAttributesW( pwsh_pathW ) == INVALID_FILE_ATTRIBUTES ) /* Download and install*/
-    {    
-        ExpandEnvironmentStringsW( L"%TMP%\\PowerShell-7.4.1-win-x64.msi", bufW, MAX_PATH + 1 );
-        fputws(L"\033[1;33mDownloading Powershell Core",stderr);fputws(cmdlineW,stderr);fputws(L"\033[0m\n",stderr);
-        if( URLDownloadToFileW( NULL, L"https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi", bufW, 0, NULL ) != S_OK )
-            { fputs("download failed",stderr ); exit(1); }
-   
-        memset( &si, 0, sizeof( STARTUPINFO )); si.cb = sizeof( STARTUPINFO ); memset( &pi, 0, sizeof( PROCESS_INFORMATION ));
-        ExpandEnvironmentStringsW( L"%winsysdir%\\msiexec.exe /i %TMP%\\PowerShell-7.4.1-win-x64.msi ENABLE_PSREMOTING=1 REGISTER_MANIFEST=1  /q", bufW, MAX_PATH + 1 );
-        CreateProcessW( NULL, bufW , 0, 0, 0, 0, 0, 0, &si, &pi);
-        WaitForSingleObject( pi.hProcess, INFINITE ); CloseHandle( pi.hProcess ); CloseHandle( pi.hThread );   
-            
-        ExpandEnvironmentStringsW( L"%TMP%\\ConEmuPack.230724.7z", bufW, MAX_PATH + 1 );
-        fputws(L"\033[1;33mDownloading ConEmu",stderr);fputws(cmdlineW,stderr);fputws(L"\033[0m\n",stderr);
-        if( URLDownloadToFileW( NULL, L"https://github.com/Maximus5/ConEmu/releases/download/v23.07.24/ConEmuPack.230724.7z", bufW, 0, NULL ) != S_OK )
-            { fputs("download failed",stderr ); exit(1); }         
-
-        ExpandEnvironmentStringsW( L"%TMP%\\7zr.exe", bufW, MAX_PATH + 1 );
-        fputws(L"\033[1;33mDownloading 7zr",stderr);fputws(cmdlineW,stderr);fputws(L"\033[0m\n",stderr);
-        if( URLDownloadToFileW( NULL, L"https://www.7-zip.org/a/7zr.exe", bufW, 0, NULL ) != S_OK ) 
-            { fputs("download failed",stderr ); exit(1); }  
-
-        memset( &si, 0, sizeof( STARTUPINFO ) ); si.cb = sizeof( STARTUPINFO ); memset( &pi , 0, sizeof( PROCESS_INFORMATION ) );
-        ExpandEnvironmentStringsW( L"%TMP%\\7zr.exe x %TMP%\\ConEmuPack.230724.7z -o\"%SystemDrive%\\ConEmu\"", bufW, MAX_PATH + 1 );
-        CreateProcessW( NULL, bufW, 0, 0, 0, 0, 0, 0, &si, &pi);
-        WaitForSingleObject( pi.hProcess, INFINITE ); CloseHandle( pi.hProcess ); CloseHandle( pi.hThread ); 
-      
-        fputws(L"\033[1;33mDownloading profile.ps1",stderr);fputws(cmdlineW,stderr);fputws(L"\033[0m\n",stderr);
-        ExpandEnvironmentStringsW( L"%ProgramW6432%\\Powershell\\7\\profile.ps1", bufW, MAX_PATH + 1 );
-        if( URLDownloadToFileW(NULL, L"https://raw.githubusercontent.com/PietJankbal/powershell-wrapper-for-wine/master/profile.ps1", bufW, 0, NULL) != S_OK )
-            { fputs("download failed",stderr ); exit(1); }
-    }
     /* Main program: wrap the original powershell-commandline into correct syntax, and send it to pwsh.exe */ 
     /* pwsh requires a command option "-c" , powershell doesn`t, so we have to insert it somewhere e.g. 'powershell -nologo 2+1' should go into 'powershell -nologo -c 2+1'*/ 
     for (i = 1;  argv[i] &&  !wcsncmp(  argv[i], L"-" , 1 ); i++ ) { if ( !is_single_or_last_option ( argv[i] ) ) i++; if(!argv[i]) break;} /* Search for 1st argument after options */

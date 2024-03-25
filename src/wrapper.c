@@ -76,7 +76,7 @@ int mainCRTStartup(void)
     for (i = 1;  argv[i] &&  !wcsncmp(  argv[i], L"-" , 1 ); i++ ) { if ( !is_single_or_last_option ( argv[i] ) ) i++; if(!argv[i]) break;} /* Search for 1st argument after options */
     for (j = 1; j < i ; j++ ) /* concatenate options into new cmdline, meanwhile working around some incompabilities */ 
     { 
-        if ( !wcscmp( L"-", argv[j] ) ) { if(j == (argc-1)) {read_from_stdin = TRUE; continue;} else {fputs("\033[1;35mInvalid usage\033[0m",stderr);exit(1);}}   /* hyphen handled later on */
+        if ( !wcscmp( L"-", argv[j] ) ) { if(j == (argc-1)) {read_from_stdin = TRUE; continue;} else {fputs("Invalid usage",stderr);exit(1);}}   /* hyphen handled later on */
         if ( !_wcsnicmp(  argv[j], L"-ve", 3 ) ) {j++;  continue;}            /* -Version, exclude from new cmdline, incompatible... */
         if ( !_wcsnicmp( argv[j], L"-nop", 4 ) ) continue;                    /* -NoProfile, also exclude to always enable profile.ps1 to work around possible incompatibilities */   
         wcscat( wcscat( cmdlineW, L" " ), argv[j] );

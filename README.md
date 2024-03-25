@@ -15,14 +15,14 @@ For fun I changed code from standard main(argc,*argv[]) to something like (this)
 
 You'll need a basic mingw toolchain, for Fedora see: https://fedoraproject.org/wiki/MinGW/Tutorial 
 
-- cd into teh cloned git repository
+- cd into the cloned git repository
 
-- Compile the 32 and 64 bit binaries with teh following:
+- Compile the 32 and 64 bit binaries with the following:
 
-```mingw64-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding  main.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell64.exe
+```mingw64-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell64.exe
  ```
 
-```mingw32-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding main.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell32.exe
+```mingw32-gcc -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -nostdlib  -Wall -Wextra -ffreestanding ./src/wrapper.c -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s -o powershell32.exe
  ```
 
 # Install 

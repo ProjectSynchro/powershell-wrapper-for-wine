@@ -16,11 +16,12 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
-    - name: Download artifacts
-      uses: dawidd6/action-download-artifact@v3
+    - name: Download Artefacts
+      uses: actions/download-artifact@v4
       with:
-        workflow: build_release.yml
-        workflow_conclusion: success
+        path: .
+        pattern: powershell*
+        merge-multiple: true
     - name: Prep Staging Area
       run: |
         mkdir -p dist

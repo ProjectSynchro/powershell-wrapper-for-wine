@@ -4,7 +4,7 @@ on:
 permissions: {}
 
 jobs:
-  image_build:
+  wrapper_build:
     strategy:
       fail-fast: false
       matrix:

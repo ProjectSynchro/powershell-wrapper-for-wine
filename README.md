@@ -19,9 +19,9 @@ For fun I changed code from standard main(argc,*argv[]) to something like [this]
 - Clone git repository
 - Change directories to git repository
 - Install the custom winetricks verbs:
-   - `winetricks --unattended powershell_core.verb conemu.verb powershell_wrapper.verb`
-   - Or you can use protontricks: `protontricks <steamappID> --unattended powershell_core.verb conemu.verb`
-
+   - `winetricks --unattended ./verbs/powershell_core.verb ./verbs/conemu.verb ./verbs/powershell_wrapper.verb`
+   - Or you can use protontricks: 
+      - `protontricks <steamappID> --unattended ./verbs/powershell_core.verb ./verbs/conemu.verb ./verbs/powershell_wrapper.verb`
 
 # Compiling and Manual Install
 
@@ -36,7 +36,8 @@ Want to only build one architecture? Try
 
 Install Powershell Core and ConEmu using Winetricks (Or you can do it manually, however this is far easier.):
 - Run the custom winetricks verbs:
-`winetricks --unattended powershell_core.verb conemu.verb` or `protontricks <steamappID> --unattended powershell_core.verb conemu.verb`
+`winetricks --unattended ./verbs/powershell_core.verb ./verbs/conemu.verb` 
+or `protontricks <steamappID> --unattended ./verbs/powershell_core.verb ./verbs/conemu.verb`
 
 Assuming `~/.wine` is where your wineprefix is
   

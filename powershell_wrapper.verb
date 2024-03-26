@@ -27,7 +27,7 @@ load_powershell_wrapper()
     w_try_cd "${W_CACHE}/${W_PACKAGE}"
     
     # Install profile.ps1 for wrapper
-    w_try cp "profile.ps1" "${W_PROGRAMS_UNIX}/PowerShell/7"
+    w_try cp "profile.ps1" "${W_PROGRAMW6432_UNIX}/PowerShell/7"
     # Install PowerShell wrapper
     w_try_cp_dll "powershell32.exe" "${W_SYSTEM32_DLLS}/WindowsPowerShell/v1.0/powershell.exe"
     w_try_cp_dll "powershell64.exe" "${W_SYSTEM64_DLLS}/WindowsPowerShell/v1.0/powershell.exe"

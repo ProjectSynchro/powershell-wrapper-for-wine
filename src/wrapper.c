@@ -1,4 +1,4 @@
-/* Installs PowerShell Core, wraps powershell`s commandline into correct syntax for pwsh.exe.
+/* Wraps powershell`s commandline into correct syntax for pwsh.exe.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

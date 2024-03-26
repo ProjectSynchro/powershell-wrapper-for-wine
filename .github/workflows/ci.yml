@@ -1,0 +1,6 @@
+name: CI Testing
+on: [push, pull_request]
+
+jobs:
+  ci_run:
+    uses: ProjectSynchro/powershell-wrapper-for-wine/.github/workflows/build_release.yml@main

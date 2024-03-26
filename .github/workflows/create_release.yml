@@ -1,0 +1,32 @@
+name: Powershell Wrapper Release
+on:
+  push:
+    tags:
+      - "v*.*.*"
+permissions: {}
+
+jobs:
+  build_release:
+    permissions:
+      contents: write
+      packages: write
+    uses: ProjectSynchro/powershell-wrapper-for-wine/.github/workflows/build_release.yml@main
+    with:
+      publish: true
+  create_release:
+    permissions:
+      contents: write
+      packages: write
+    runs-on: ubuntu-latest
+    needs: build_release
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        bodyFile: "CHANGELOG.md"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        prerelease: false
+        allowUpdates: true
+        makeLatest: true

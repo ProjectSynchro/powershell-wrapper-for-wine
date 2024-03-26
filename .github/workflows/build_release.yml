@@ -1,0 +1,34 @@
+name: Build PowerShell Wrapper
+on:
+  workflow_call:
+permissions: {}
+
+jobs:
+  image_build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: "x86"
+          - arch: "x64"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install toolchain
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: ${{ matrix.arch }}
+      - name: Build Powershell Wrapper (32bit)
+        if: ${{ matrix.arch }} == 'x86'
+        run: |
+          make powershell32.exe
+      - name: Build Powershell Wrapper (64bit)
+        if: ${{ matrix.arch }} == 'x64'
+        run: |
+          make powershell64.exe
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: wrapper-${{ matrix.arch }}
+          path: *.exe

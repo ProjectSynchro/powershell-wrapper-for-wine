@@ -1,0 +1,34 @@
+# Metadata for PowerShell Wrapper
+w_metadata powershell_wrapper apps \
+    title="PowerShell Wrapper For Wine" \
+    publisher="ProjectSynchro" \
+    year="2024" \
+    media="download" \
+    file1="powershell32.exe " \
+    file2="powershell64.exe " \
+    file3="profile.ps1"
+
+# Function to download and install PowerShell Core
+load_powershell_wrapper()
+{
+    w_package_unsupported_win32
+    
+    #w_do_call powershell_core
+    #w_do_call conemu
+
+    # Download PowerShell Wrapper EXEs
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v0.0.1/powershell32.exe f764f0a0cec123c7b30bbe601e2868e20e6a24ed0f31a8558a5a07f708b47602
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v0.0.1/powershell64.exe 8f8d63d300a91a59b883aa18fb31110d57dfa28131ce9b73018d19460b944466
+
+    # Download PowerShell Wrapper profile.ps1
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v0.0.1/profile.ps1 b0fd5df54a2b281348ab03c2942b1e83278bee62c71e06d3d671724b49946593
+
+    # Change directory to the cache directory where the files are downloaded
+    w_try_cd "${W_CACHE}/${W_PACKAGE}"
+    
+    # Install profile.ps1 for wrapper
+    w_try cp "profile.ps1" "${W_PROGRAMS_UNIX}/PowerShell/7"
+    # Install PowerShell wrapper
+    w_try_cp_dll "powershell64.exe" "${W_SYSTEM32_DLLS}/WindowsPowerShell/v1.0/powershell.exe"
+    w_try_cp_dll "powershell32.exe" "${W_SYSTEM64_DLLS}/WindowsPowerShell/v1.0/powershell.exe"
+}

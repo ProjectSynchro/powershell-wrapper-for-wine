@@ -4,7 +4,7 @@ CFLAGS=-O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tabl
 all: powershell32.exe powershell64.exe
 
 powershell64.exe: src/wrapper.c
-	x86_64-w64-mingw32-gcc -c $(CPPFLAGS) $(CFLAGS) $^ -o $@
+	x86_64-w64-mingw32-gcc $^ $(CFLAGS) -o $@
 
 powershell32.exe: src/wrapper.c
-	i686-w64-mingw32-gcc -c $(CPPFLAGS) $(CFLAGS) $^ -o $@
+	i686-w64-mingw32-gcc $^ $(CFLAGS) -o $@

@@ -69,7 +69,7 @@ int mainCRTStartup(void)
     int i, j, argc;
     
     argv = CommandLineToArgvW ( GetCommandLineW(), &argc);
-    ExpandEnvironmentStringsW(L"%ProgramW6432%\\Powershell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH+1);
+    ExpandEnvironmentStringsW(L"%ProgramW6432%\\PowerShell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH+1);
 
     /* Main program: wrap the original powershell-commandline into correct syntax, and send it to pwsh.exe */ 
     /* pwsh requires a command option "-c" , powershell doesn`t, so we have to insert it somewhere e.g. 'powershell -nologo 2+1' should go into 'powershell -nologo -c 2+1'*/ 

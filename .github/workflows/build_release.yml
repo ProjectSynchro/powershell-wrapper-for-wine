@@ -9,8 +9,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: "x86"
-          - arch: "x64"
+          - arch: "32"
+          - arch: "64"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -18,18 +18,17 @@ jobs:
       - name: Install toolchain
         uses: egor-tensin/setup-mingw@v2
         with:
-          platform: ${{ matrix.arch }}
+          platform: "x${{ matrix.arch }}"
       - name: Build Powershell Wrapper (32bit)
-        if: ${{ matrix.arch }} == 'x86'
+        if: ${{ matrix.arch }} == '32'
         run: |
           make powershell32.exe
       - name: Build Powershell Wrapper (64bit)
-        if: ${{ matrix.arch }} == 'x64'
+        if: ${{ matrix.arch }} == '64'
         run: |
           make powershell64.exe
       - name: Upload Build Artifacts
-        if: ${{ matrix.arch }} == 'x64'
         uses: actions/upload-artifact@v4
         with:
-          name: wrapper-${GITHUB_SHA::7}
+          name: wrapper-${GITHUB_SHA}
           path: "*.exe"

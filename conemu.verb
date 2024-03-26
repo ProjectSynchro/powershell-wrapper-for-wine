@@ -1,0 +1,21 @@
+# Metadata for ConEmu
+w_metadata conemu apps \
+    title="ConEmu" \
+    publisher="ConEmu Authors" \
+    year="2024" \
+    media="download" \
+    file1="ConEmuPack.230724.7z"
+
+# Function to download and install PowerShell Core
+load_conemu()
+{
+    # Download ConEmu release archive
+    w_download https://github.com/Maximus5/ConEmu/releases/download/v23.07.24/ConEmuPack.230724.7z 2a9b98ebecaede62665ef427b05b3a5ccdac7bd3202414fc0f4c10825b4f4ea2
+    
+    # Change directory to the cache directory where the archive is downloaded
+    w_try_cd "${W_CACHE}/${W_PACKAGE}"
+    
+    # Create output directory and extract ConEmu into it.
+    w_try_mkdir "${W_DRIVE_C}/ConEmu"
+    w_try_7z "${W_DRIVE_C}/ConEmu" "ConEmuPack.230724.7z"
+}

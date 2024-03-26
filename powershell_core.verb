@@ -1,0 +1,22 @@
+# Metadata for PowerShell Core
+w_metadata powershell_core apps \
+    title="PowerShell Core" \
+    publisher="Microsoft" \
+    year="2024" \
+    media="download" \
+    file1="PowerShell-7.4.1-win-x64.msi"
+
+# Function to download and install PowerShell Core
+load_powershell_core()
+{
+   w_package_unsupported_win32
+
+    # Download PowerShell Core MSI
+    w_download https://github.com/PowerShell/PowerShell/releases/download/v7.4.1/PowerShell-7.4.1-win-x64.msi 66c7c35ed9a46bd27e3d915dcf9a05e38b3f5ebb039883b92aa62ffea20fb187
+    
+    # Change directory to the cache directory where the MSI file is downloaded
+    w_try_cd "${W_CACHE}/${W_PACKAGE}"
+    
+    # Install PowerShell Core using Wine's msiexec
+    w_try_msiexec64 /i "PowerShell-7.4.1-win-x64.msi"
+}

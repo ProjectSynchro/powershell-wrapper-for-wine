@@ -20,11 +20,11 @@ jobs:
         with:
           platform: "x${{ matrix.arch }}"
       - name: Build Powershell Wrapper (32bit)
-        if: ${{ matrix.arch }} == '32'
+        if: ${{ matrix.arch == '32' }}
         run: |
           make powershell32.exe
       - name: Build Powershell Wrapper (64bit)
-        if: ${{ matrix.arch }} == '64'
+        if: ${{ matrix.arch == '64' }}
         run: |
           make powershell64.exe
       - name: Upload Build Artifacts

@@ -18,5 +18,5 @@ load_powershell_core()
     w_try_cd "${W_CACHE}/${W_PACKAGE}"
     
     # Install PowerShell Core using Wine's msiexec
-    w_try_msiexec64 /i "PowerShell-7.4.1-win-x64.msi"
+    w_try_msiexec64 /i "PowerShell-7.4.1-win-x64.msi" ENABLE_PSREMOTING=1 REGISTER_MANIFEST=1
 }

@@ -32,6 +32,6 @@ jobs:
         artifacts: "./dist/*"
         bodyFile: "CHANGELOG.md"
         token: ${{ secrets.GITHUB_TOKEN }}
-        prerelease: false
+        prerelease: true
         allowUpdates: true
         makeLatest: true

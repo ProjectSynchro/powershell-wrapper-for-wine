@@ -14,7 +14,6 @@ load_powershell_wrapper()
     w_package_unsupported_win32
     
     #w_do_call powershell_core
-    #w_do_call conemu
 
     # Download PowerShell Wrapper EXEs
     w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.0.0/powershell32.exe 880b6d5569bbb3cbed688b13ce4b92596821fb9345de4cdfde000d005aa3e561

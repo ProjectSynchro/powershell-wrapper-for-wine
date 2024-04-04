@@ -48,7 +48,7 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
 
 __attribute__((externally_visible)) // for -fwhole-program
 int mainCRTStartup(void) {
-    BOOL read_from_stdin = FALSE, ps_console = FALSE;
+    BOOL read_from_stdin = FALSE;
     wchar_t cmdlineW[4096] = L"", pwsh_pathW[MAX_PATH] = L"", bufW[MAX_PATH] = L"", **argv;
     DWORD exitcode;
     STARTUPINFOW si = {0};
@@ -57,6 +57,10 @@ int mainCRTStartup(void) {
 
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     ExpandEnvironmentStringsW(L"%ProgramW6432%\\PowerShell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH + 1);
+
+    // Set environment variable to disable color rendering output 
+    _wputenv_s(L"NO_COLOR", L"1");
+    // or _wputenv_s(L"TERM", L"xterm-mono");
 
     // Concatenate options into new cmdline, handling some incompatibilities
     for (i = 1; argv[i] && !wcsncmp(argv[i], L"-", 1); i++) {
@@ -129,17 +133,8 @@ int mainCRTStartup(void) {
         }
     }
 
-    // Execute the command through pwsh.exe or start PSconsole via ConEmu if no command found
-    if ((i == argc) && !read_from_stdin) {
-        ps_console = TRUE;
-    }
-
-    if (ps_console) {
-        ExpandEnvironmentStringsW(L" -c %SystemDrive%\\ConEmu\\ConEmu64.exe -NoUpdate -LoadRegistry -run %ProgramW6432%\\Powershell\\7\\pwsh.exe ",
-                                  bufW, MAX_PATH + 1);
-    }
-
-    CreateProcessW(pwsh_pathW, ps_console ? wcscat(bufW, cmdlineW) : cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);
+    // Execute the command through pwsh.exe
+    CreateProcessW(pwsh_pathW, cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);
     WaitForSingleObject(pi.hProcess, INFINITE);
     GetExitCodeProcess(pi.hProcess, &exitcode);
     CloseHandle(pi.hProcess);

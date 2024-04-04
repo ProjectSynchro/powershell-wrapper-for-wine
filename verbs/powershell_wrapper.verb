@@ -16,11 +16,11 @@ load_powershell_wrapper()
     #w_do_call powershell_core
 
     # Download PowerShell Wrapper EXEs
-    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.0.0/powershell32.exe 880b6d5569bbb3cbed688b13ce4b92596821fb9345de4cdfde000d005aa3e561
-    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.0.0/powershell64.exe 24c77a774b07f4a20cd698907d35de8b244b4e7636f792747eb4e72fcc3fec69
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.5.0/powershell32.exe ae26e286deda4dcffb8de5840569d6054e857a9fa4b6b8b4c16a38b78cf8940c
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.5.0/powershell64.exe e2cb4ec07e559668a404617bcd5656a4fe7fae7b4fb2067531a5da6ae39b4b90
 
     # Download PowerShell Wrapper profile.ps1
-    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.0.0/profile.ps1 b0fd5df54a2b281348ab03c2942b1e83278bee62c71e06d3d671724b49946593
+    w_download https://github.com/ProjectSynchro/powershell-wrapper-for-wine/releases/download/v1.5.0/profile.ps1 00c2f41fbdcfa5719e33ac0123d3a9e4c272167b2f4b1e6292f4ce0a48098b57
 
     # Change directory to the cache directory where the files are downloaded
     w_try_cd "${W_CACHE}/${W_PACKAGE}"

@@ -56,7 +56,7 @@ int mainCRTStartup(void) {
     int i, j, argc;
 
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    ExpandEnvironmentStringsW(L"%ProgramW6432%\\PowerShell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH + 1);
+    ExpandEnvironmentStringsW(L"%SystemDrive%\\Program Files\\PowerShell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH + 1);
 
     // Set environment variable to disable color rendering output 
     _wputenv_s(L"NO_COLOR", L"1");

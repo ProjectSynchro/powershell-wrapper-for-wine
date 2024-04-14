@@ -124,7 +124,7 @@ function Start-Process {
                 #Add-Content -Path $logFilePath -Value $logEntry
 
                 $fileContent = $fileContent -replace '\(echo %ERRORLEVEL%\) >', 'echo %ERRORLEVEL% >'
-                #Set-Content $FilePath -Value $fileContent
+                Set-Content $FilePath -Value $fileContent
             }
         }
 

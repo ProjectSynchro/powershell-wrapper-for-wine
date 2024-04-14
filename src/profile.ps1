@@ -7,7 +7,7 @@ $path = $env:PSModulePath -split ';' ; $env:PSModulePath  = ( $path | Select-Obj
 # Removes the need for ConEmu, by removing all colours.
 # Works around wine bug 49780: https://bugs.winehq.org/show_bug.cgi?id=49780
 # See: https://github.com/PowerShell/PSReadLine/issues/3918 and https://github.com/PowerShell/PowerShell/issues/21160 for context.
-Remove-Module PSReadLine -Force
+Remove-Module PSReadLine -Force -ErrorAction SilentlyContinue
 
 #Dry-run 'powershell.exe' once to set env vars below (after you changed them); They are written to HKCU:Environment
 #To enable/disable replacing strings in the cmdline fed to pwsh.exe set/unset this env var:

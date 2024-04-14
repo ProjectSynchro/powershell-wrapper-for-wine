@@ -46,5 +46,3 @@ cp -rf ./powershell64.exe ~/.wine/drive_c/windows/system32/WindowsPowerShell/v1.
 cp -rf ./powershell32.exe ~/.wine/drive_c/windows/syswow64/WindowsPowerShell/v1.0/powershell.exe
 cp -rf ./src/profile.ps1 "~/.wine/drive_c/Program Files/PowerShell/7/profile.ps1"
 ```
-
-- WINEARCH=win32 is _not_ supported (yet)

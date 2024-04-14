@@ -55,3 +55,97 @@ Function Get-CIMInstance ( [parameter(mandatory)] [string]$classname, [string[]]
 }
 
 Set-Alias gwmi Get-WmiObject
+
+# Add a reimplementation of Start-Process to workaround issues with Wine's CMD.
+# For some reason (echo %ERRORLEVEL%\) > does not pipe to a file like it should but
+# echo %ERRORLEVEL% > does. This cmdlet will check for batch files are rewrite that
+# string if it exists.
+#
+# Fixes the issues seen in the RSI Launcher when it makes use of
+# sudo-prompt: https://github.com/jorangreef/sudo-prompt
+#
+# In theory this should also fix other electron apps with this issue.
+
+function Start-Process {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true, Position=0)]
+        [string]$FilePath,
+
+        [string[]]$ArgumentList,
+
+        [System.Management.Automation.PSCredential]$Credential,
+
+        [switch]$LoadUserProfile,
+
+        [switch]$NoNewWindow,
+
+        [switch]$PassThru,
+
+        [string]$RedirectStandardError,
+
+        [string]$RedirectStandardInput,
+
+        [string]$RedirectStandardOutput,
+
+        [switch]$UseNewEnvironment,
+
+        [switch]$Wait,
+
+        [ValidateSet('Normal', 'Hidden', 'Minimized', 'Maximized')]
+        [string]$WindowStyle = 'Normal',
+
+        [string]$WorkingDirectory,
+
+        [string]$Verb
+    )
+
+    # Log function parameters to a file
+    $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
+    $logEntry = "$(Get-Date) - Starting process: $FilePath with arguments: $ArgumentList"
+    #Add-Content -Path $logFilePath -Value $logEntry
+
+    try {
+        # Check if the file exists at the specified path
+        if (-not (Test-Path $FilePath -PathType Leaf)) {
+            $logEntry = "$(Get-Date) - File not found: $FilePath"
+            #Add-Content -Path $logFilePath -Value $logEntry
+            return
+        }
+
+        # Check if the file extension is .bat and rewrite the command if needed
+        if ([System.IO.Path]::GetExtension($FilePath).ToLower() -eq '.bat') {
+            $logEntry = "$(Get-Date) - Batch file detected: $FilePath"
+           # Add-Content -Path $logFilePath -Value $logEntry
+
+            $fileContent = Get-Content $FilePath -Raw
+            if ($fileContent -match '\(echo %ERRORLEVEL%\) >') {
+                $logEntry = "$(Get-Date) - Rewriting batch file: $FilePath"
+                #Add-Content -Path $logFilePath -Value $logEntry
+
+                $fileContent = $fileContent -replace '\(echo %ERRORLEVEL%\) >', 'echo %ERRORLEVEL% >'
+                #Set-Content $FilePath -Value $fileContent
+            }
+        }
+
+        $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $processStartInfo.FileName = $FilePath
+        $processStartInfo.Arguments = $ArgumentList -join ' '
+        $processStartInfo.UseShellExecute = $false
+
+        # Other settings...
+
+        $process = [System.Diagnostics.Process]::Start($processStartInfo)
+
+        if ($PassThru) {
+            $process
+        }
+
+        if ($Wait) {
+            $process.WaitForExit()
+        }
+    } catch {
+        $logEntry = "$(Get-Date) - Error starting process: $_"
+        #Add-Content -Path $logFilePath -Value $logEntry
+    }
+}

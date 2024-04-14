@@ -35,6 +35,6 @@ load_powershell()
     if [ "${W_ARCH}" = "win64" ]; then
         w_try_cp_dll "powershell64.exe" "${W_SYSTEM64_DLLS}/WindowsPowerShell/v1.0/powershell.exe"
     fi
-    
+
     w_override_dlls native powershell.exe
 }

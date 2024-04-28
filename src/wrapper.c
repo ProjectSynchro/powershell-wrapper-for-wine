@@ -99,15 +99,27 @@ int mainCRTStartup(void) {
         wcscat(wcscat(cmdlineW, L" "), argv[j]);
     }
 
-    // Handle pipeline for reading from stdin
+    // Support pipeline to handle something like "$(get-date) | powershell -"
     if (read_from_stdin) {
-        // Handle pipe
-        if (GetFileType(GetStdHandle(STD_INPUT_HANDLE)) != FILE_TYPE_CHAR) {
+        WCHAR defline[4096]; // Buffer to store converted line
+        char line[4096];     // Buffer to store input line
+        HANDLE input = GetStdHandle(STD_INPUT_HANDLE); // Get the standard input handle
+        DWORD type = GetFileType(input);               // Get the file type of the input handle
+
+        // Check if input is redirected (e.g., via pipe)
+        if (type != FILE_TYPE_CHAR) { // Not redirected (FILE_TYPE_PIPE or FILE_TYPE_DISK)
+            // Check if the last argument is "-" and the second-to-last argument is not "-c"
             if (!wcscmp(argv[argc - 1], L"-") && _wcsnicmp(argv[argc - 2], L"-c", 2)) {
-                wcscat(cmdlineW, L" -c ");
+                wcscat(cmdlineW, L" -c "); // Append "-c" to cmdlineW
+            }
+            wcscat(cmdlineW, L" "); // Append a space to cmdlineW
+            // Read input line by line and append to cmdlineW after converting to wide characters
+            while (fgets(line, 4096, stdin) != NULL) {
+                mbstowcs(defline, line, 4096); // Convert input line to wide characters
+                wcscat(cmdlineW, defline);    // Append converted line to cmdlineW
             }
         }
-    }
+    } // End support pipeline
 
     // Replace incompatible commands/strings in the cmdline fed to pwsh.exe
     if (GetEnvironmentVariableW(L"PSHACKS", bufW, MAX_PATH + 1)) {

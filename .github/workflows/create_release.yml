@@ -27,6 +27,21 @@ jobs:
         mkdir -p dist
         cp src/profile.ps1 ./dist
         cp *.exe ./dist
+
+        # Setup Checksums section
+        echo >> CHANGELOG.md
+        echo "## Checksums:" >> CHANGELOG.md
+        echo >> CHANGELOG.md
+        echo '```' >> CHANGELOG.md
+        pushd ./dist
+        files=("powershell32.exe" "powershell64.exe" "profile.ps1")
+        # Calculate and append SHA256 checksums to CHANGELOG.md
+        for file in "${files[@]}"; do
+            sha256sum "$file" >> ../CHANGELOG.md
+            echo >> ../CHANGELOG.md  # Add a newline
+        done
+        popd
+        echo '```' >> CHANGELOG.md
     - name: Create Release
       uses: ncipollo/release-action@v1
       with:

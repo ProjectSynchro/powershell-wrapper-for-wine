@@ -19,9 +19,9 @@ For fun I changed code from standard main(argc,*argv[]) to something like [this]
 - Clone git repository
 - Change directories to git repository
 - Install the custom winetricks verbs:
-   - `winetricks --unattended ./verbs/powershell_core.verb ./verbs/powershell_wrapper.verb`
+   - `winetricks --unattended ./verbs/powershell_core.verb ./verbs/powershell.verb`
    - Or you can use protontricks: 
-      - `protontricks <steamappID> --unattended ./verbs/powershell_core.verb ./verbs/powershell_wrapper.verb`
+      - `protontricks <steamappID> --unattended ./verbs/powershell_core.verb ./verbs/powershell.verb`
 
 # Compiling and Manual Install
 

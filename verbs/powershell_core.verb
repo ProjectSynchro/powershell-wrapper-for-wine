@@ -1,32 +1,27 @@
 # Metadata for PowerShell Core
-w_metadata powershell_core apps \
+w_metadata powershell_core dlls \
     title="PowerShell Core" \
     publisher="Microsoft" \
     year="2024" \
     media="download" \
-    file1="PowerShell-7.2.19-win-x86.msi" \
-    file2="PowerShell-7.2.19-win-x64.msi"
+    file1="PowerShell-7.2.21-win-x86.msi" \
+    file2="PowerShell-7.2.21-win-x64.msi"
 
 load_powershell_core()
 {
     # Uncomment below and remove win32 download elif and file when PowerShell Core v7.2 LTS goes EOL
     #w_package_unsupported_win32
 
-    # Derive version number from file1
-    _load_powershell_core_regex='[0-9]+\.[0-9]+\.[0-9]+'
-
-    if echo "${file1}" | grep -E -o "${_load_powershell_core_regex}" >/dev/null; then
-        _load_powershell_core_version=$(echo "${file1}" | grep -E -o "${_load_powershell_core_regex}")
-    fi
-
     # Download PowerShell Core 7.2.x MSI (Latest LTS Version to support win32)
+    # https://github.com/PowerShell/PowerShell/releases/v7.2.21
     if [ "${W_ARCH}" = "win64" ]; then
-        # https://github.com/PowerShell/PowerShell/releases/v7.2.19
-        w_download "https://github.com/PowerShell/PowerShell/releases/download/v${_load_powershell_core_version}/${file2}" 965e10fc77dbce6ef622f1c0fcddc03bebd2b3629f1a3253cc17a8ffc71a6522
+        w_download "https://github.com/PowerShell/PowerShell/releases/download/v7.2.21/PowerShell-7.2.21-win-x64.msi" 407640b11c89d66ec7892229e68b1d74b26f0e820b52da268c67fd166c2b46ad
+        # Disable SC2154 due to shellcheck not knowing metadata is sourced before this function is run
+        # shellcheck disable=SC2154
         msi="${file2}"
     elif [ "${W_ARCH}" = "win32" ]; then
-        # https://github.com/PowerShell/PowerShell/releases/v7.2.19
-        w_download "https://github.com/PowerShell/PowerShell/releases/download/v${_load_powershell_core_version}/${file1}" cbf214d41bc8be4b1ce5ba566dbfee5f335971c48231825e90af7954356ce797
+        w_download "https://github.com/PowerShell/PowerShell/releases/download/v7.2.21/PowerShell-7.2.21-win-x86.msi" cdfd69f6997eabe5abdc38869eedfd90761416261bf95531300f652d0932bf0a
+        # shellcheck disable=SC2154
         msi="${file1}"
     fi
 

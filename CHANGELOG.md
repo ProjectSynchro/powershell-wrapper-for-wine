@@ -11,3 +11,4 @@
    - Additionally add support for 32bit wineprefixes
 - v2.0.1 - Hotfix a dumb mistake that causes the RSI Launcher to stop working.
 - v2.1.0 - Fix support for handling pipeline inputs.
+- v2.1.1 - Fix support for non-english and nonstandard "Program Files" locations.

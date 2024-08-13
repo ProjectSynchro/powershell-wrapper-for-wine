@@ -46,6 +46,22 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     return b ? b : buf;
 }
 
+// Function to check if the process is running under WOW64 (32-bit process on 64-bit Windows)
+BOOL is_wow64() {
+    BOOL bIsWow64 = FALSE;
+    IsWow64Process(GetCurrentProcess(), &bIsWow64);
+    return bIsWow64;
+}
+
+// Function to get the correct Program Files path
+void get_program_files_path(wchar_t *path, size_t size) {
+    if (is_wow64()) {
+        ExpandEnvironmentStringsW(L"%ProgramW6432%\\PowerShell\\7\\pwsh.exe", path, (DWORD)size);
+    } else {
+        ExpandEnvironmentStringsW(L"%ProgramFiles%\\PowerShell\\7\\pwsh.exe", path, (DWORD)size);
+    }
+}
+
 __attribute__((externally_visible)) // for -fwhole-program
 int mainCRTStartup(void) {
     BOOL read_from_stdin = FALSE;
@@ -56,7 +72,9 @@ int mainCRTStartup(void) {
     int i, j, argc;
 
     argv = CommandLineToArgvW(GetCommandLineW(), &argc);
-    ExpandEnvironmentStringsW(L"%SystemDrive%\\Program Files\\PowerShell\\7\\pwsh.exe", pwsh_pathW, MAX_PATH + 1);
+
+    // Get the correct Program Files path based on the process architecture
+    get_program_files_path(pwsh_pathW, MAX_PATH + 1);
 
     // Set environment variable to disable color rendering output 
     _wputenv_s(L"NO_COLOR", L"1");

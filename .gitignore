@@ -1,1 +1,9 @@
+# dist build directory
+dist/*
+
+# files
 *.exe
+
+# dist archives
+*.zip
+*.tar.gz

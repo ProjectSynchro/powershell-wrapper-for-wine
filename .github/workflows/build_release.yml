@@ -10,11 +10,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Install 32bit toolchain
-        uses: e-t-l/setup-mingw@patch-1
+        uses: egor-tensin/setup-mingw@v2
         with:
           platform: "x32"
       - name: Install 64bit toolchain
-        uses: e-t-l/setup-mingw@patch-1
+        uses: egor-tensin/setup-mingw@v2
         with:
           platform: "x64"
       - name: Build Powershell Wrapper (32bit)

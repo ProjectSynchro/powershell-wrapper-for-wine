@@ -5,30 +5,39 @@ permissions: {}
 
 jobs:
   wrapper_build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: "32"
-          - arch: "64"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-      - name: Install toolchain
+      - name: Install 32bit toolchain
         uses: egor-tensin/setup-mingw@v2
         with:
-          platform: "x${{ matrix.arch }}"
+          platform: "x32"
+      - name: Install 64bit toolchain
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: "x64"
       - name: Build Powershell Wrapper (32bit)
-        if: ${{ matrix.arch == '32' }}
         run: |
           make powershell32.exe
-      - name: Build Powershell Wrapper (64bit)
-        if: ${{ matrix.arch == '64' }}
-        run: |
-          make powershell64.exe
-      - name: Upload Build Artifacts
+      - name: Upload 32bit Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: powershell${{ matrix.arch }}-wrapper
-          path: "powershell${{ matrix.arch }}.exe"
+          name: powershell32-wrapper
+          path: "powershell32.exe"
+      - name: Build Powershell Wrapper (64bit)
+        run: |
+          make powershell64.exe
+      - name: Upload 64bit Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: powershell64-wrapper
+          path: "powershell64.exe"
+      - name: Build Powershell Wrapper (Dist)
+        run: |
+          make dist
+      - name: Upload Dist Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: powershell-wrapper-dist
+          path: powershell-wrapper.*

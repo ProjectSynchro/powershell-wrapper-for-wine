@@ -12,11 +12,7 @@ jobs:
       - name: Install 32bit toolchain
         uses: egor-tensin/setup-mingw@v2
         with:
-          platform: "x32"
-      - name: Install 64bit toolchain
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: "x64"
+          platform: "both"
       - name: Build Powershell Wrapper (32bit)
         run: |
           make powershell32.exe

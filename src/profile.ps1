@@ -102,7 +102,7 @@ function Start-Process {
 
     # Log function parameters to a file
     $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
-    $logEntry = "$(Get-Date) - Starting process: $FilePath with arguments: $ArgumentList"
+    $logEntry = "$(Get-Date) - Starting process: $FilePath with arguments: $($ArgumentList -join ' ')"
     Add-Content -Path $logFilePath -Value $logEntry
 
     try {
@@ -144,29 +144,41 @@ function Start-Process {
 
         # Set working directory if provided
         if ($WorkingDirectory) {
+            $logEntry = "$(Get-Date) - Setting working directory: $WorkingDirectory"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.WorkingDirectory = $WorkingDirectory
         }
 
         # Set verb if provided
         if ($Verb) {
+            $logEntry = "$(Get-Date) - Setting verb: $Verb"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.Verb = $Verb
         }
 
         # Handle input/output redirection
         if ($RedirectStandardOutput) {
+            $logEntry = "$(Get-Date) - Redirecting standard output to: $RedirectStandardOutput"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.RedirectStandardOutput = $true
             $processStartInfo.StandardOutputFileName = $RedirectStandardOutput
         }
         if ($RedirectStandardError) {
+            $logEntry = "$(Get-Date) - Redirecting standard error to: $RedirectStandardError"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.RedirectStandardError = $true
             $processStartInfo.StandardErrorFileName = $RedirectStandardError
         }
         if ($RedirectStandardInput) {
+            $logEntry = "$(Get-Date) - Redirecting standard input from: $RedirectStandardInput"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.RedirectStandardInput = $true
         }
 
         # If credentials provided, load them
         if ($Credential) {
+            $logEntry = "$(Get-Date) - Using provided credentials for: $($Credential.UserName)"
+            Add-Content -Path $logFilePath -Value $logEntry
             $processStartInfo.UserName = $Credential.UserName
             $password = $Credential.GetNetworkCredential().Password
             $processStartInfo.Password = (ConvertTo-SecureString $password -AsPlainText -Force)
@@ -174,11 +186,21 @@ function Start-Process {
 
         # UseNewEnvironment flag (whether to inherit or create new environment variables)
         if ($UseNewEnvironment) {
-            $processStartInfo.EnvironmentVariables.Clear()  # Clear all environment variables for the process
+            $logEntry = "$(Get-Date) - Clearing environment variables for new process"
+            Add-Content -Path $logFilePath -Value $logEntry
+            $processStartInfo.EnvironmentVariables.Clear()
         }
 
         # Start process
+        $logEntry = "$(Get-Date) - Starting process: $FilePath"
+        Add-Content -Path $logFilePath -Value $logEntry
         $process = [System.Diagnostics.Process]::Start($processStartInfo)
+
+        # Log process start success
+        if ($process) {
+            $logEntry = "$(Get-Date) - Process started successfully: $FilePath (PID: $($process.Id))"
+            Add-Content -Path $logFilePath -Value $logEntry
+        }
 
         # If PassThru is specified, return the process object
         if ($PassThru) {
@@ -187,7 +209,13 @@ function Start-Process {
 
         # Wait for the process to exit if the Wait switch is specified
         if ($Wait) {
+            $logEntry = "$(Get-Date) - Waiting for process to exit: $FilePath"
+            Add-Content -Path $logFilePath -Value $logEntry
             $process.WaitForExit()
+
+            $exitCode = $process.ExitCode
+            $logEntry = "$(Get-Date) - Process exited with code: $exitCode"
+            Add-Content -Path $logFilePath -Value $logEntry
         }
 
     } catch {
@@ -196,4 +224,3 @@ function Start-Process {
         throw $_
     }
 }
-

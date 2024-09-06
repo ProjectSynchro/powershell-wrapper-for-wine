@@ -103,49 +103,97 @@ function Start-Process {
     # Log function parameters to a file
     $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
     $logEntry = "$(Get-Date) - Starting process: $FilePath with arguments: $ArgumentList"
-    #Add-Content -Path $logFilePath -Value $logEntry
+    Add-Content -Path $logFilePath -Value $logEntry
 
     try {
         # Check if the file exists at the specified path
         if (-not (Test-Path $FilePath -PathType Leaf)) {
             $logEntry = "$(Get-Date) - File not found: $FilePath"
-            #Add-Content -Path $logFilePath -Value $logEntry
-            return
+            Add-Content -Path $logFilePath -Value $logEntry
+            throw "File not found: $FilePath"
         }
 
         # Check if the file extension is .bat and rewrite the command if needed
         if ([System.IO.Path]::GetExtension($FilePath).ToLower() -eq '.bat') {
             $logEntry = "$(Get-Date) - Batch file detected: $FilePath"
-           # Add-Content -Path $logFilePath -Value $logEntry
+            Add-Content -Path $logFilePath -Value $logEntry
 
             $fileContent = Get-Content $FilePath -Raw
             if ($fileContent -match '\(echo %ERRORLEVEL%\) >') {
                 $logEntry = "$(Get-Date) - Rewriting batch file: $FilePath"
-                #Add-Content -Path $logFilePath -Value $logEntry
+                Add-Content -Path $logFilePath -Value $logEntry
 
                 $fileContent = $fileContent -replace '\(echo %ERRORLEVEL%\) >', 'echo %ERRORLEVEL% >'
                 Set-Content $FilePath -Value $fileContent
             }
         }
 
+        # Initialize ProcessStartInfo
         $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processStartInfo.FileName = $FilePath
         $processStartInfo.Arguments = $ArgumentList -join ' '
         $processStartInfo.UseShellExecute = $false
 
-        # Other settings...
-
-        $process = [System.Diagnostics.Process]::Start($processStartInfo)
-
-        if ($PassThru) {
-            $process
+        # Set window style if needed
+        switch ($WindowStyle) {
+            'Hidden'    { $processStartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Hidden }
+            'Minimized' { $processStartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Minimized }
+            'Maximized' { $processStartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Maximized }
+            default     { $processStartInfo.WindowStyle = [System.Diagnostics.ProcessWindowStyle]::Normal }
         }
 
+        # Set working directory if provided
+        if ($WorkingDirectory) {
+            $processStartInfo.WorkingDirectory = $WorkingDirectory
+        }
+
+        # Set verb if provided
+        if ($Verb) {
+            $processStartInfo.Verb = $Verb
+        }
+
+        # Handle input/output redirection
+        if ($RedirectStandardOutput) {
+            $processStartInfo.RedirectStandardOutput = $true
+            $processStartInfo.StandardOutputFileName = $RedirectStandardOutput
+        }
+        if ($RedirectStandardError) {
+            $processStartInfo.RedirectStandardError = $true
+            $processStartInfo.StandardErrorFileName = $RedirectStandardError
+        }
+        if ($RedirectStandardInput) {
+            $processStartInfo.RedirectStandardInput = $true
+        }
+
+        # If credentials provided, load them
+        if ($Credential) {
+            $processStartInfo.UserName = $Credential.UserName
+            $password = $Credential.GetNetworkCredential().Password
+            $processStartInfo.Password = (ConvertTo-SecureString $password -AsPlainText -Force)
+        }
+
+        # UseNewEnvironment flag (whether to inherit or create new environment variables)
+        if ($UseNewEnvironment) {
+            $processStartInfo.EnvironmentVariables.Clear()  # Clear all environment variables for the process
+        }
+
+        # Start process
+        $process = [System.Diagnostics.Process]::Start($processStartInfo)
+
+        # If PassThru is specified, return the process object
+        if ($PassThru) {
+            return $process
+        }
+
+        # Wait for the process to exit if the Wait switch is specified
         if ($Wait) {
             $process.WaitForExit()
         }
+
     } catch {
         $logEntry = "$(Get-Date) - Error starting process: $_"
-        #Add-Content -Path $logFilePath -Value $logEntry
+        Add-Content -Path $logFilePath -Value $logEntry
+        throw $_
     }
 }
+

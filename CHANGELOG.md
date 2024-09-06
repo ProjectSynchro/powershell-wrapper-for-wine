@@ -14,3 +14,5 @@
 - v2.1.1 - Fix support for non-english and nonstandard "Program Files" locations.
 - v2.1.2 - Add new dist zip and tar.gz archives.
    - These are laid out like this: `/profile.ps1, /32/powershell.exe, /64/powershell.exe`
+- v2.1.3 - Fix [ProjectSynchro/powershell-wrapper-for-wine#2](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/issues/2)
+   - This fixes installing the EAC service in the RSI Launcher.

@@ -12,6 +12,22 @@ static inline BOOL is_single_or_last_option(WCHAR *opt) {
             !_wcsnicmp(opt, L"-m", 2) || !_wcsnicmp(opt, L"-s", 2));
 }
 
+/*
+// Function to log debug information to a file
+void log_to_file(const wchar_t *logMessage) {
+    // Open the log file in append mode
+    FILE *logFile = _wfopen(L"C:\\logfile.txt", L"a+");  // Adjust the path accordingly
+    if (logFile) {
+        // Write the log message to the file
+        fwprintf(logFile, L"%s\n", logMessage);
+        // Close the file
+        fclose(logFile);
+    } else {
+        wprintf(L"Failed to open log file\n");
+    }
+}
+/*
+
 /* Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; Credits to the there mentioned authors*/
 /* replaces in the string "str" all the occurrences of the string "sub" with the string "rep" */
 static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
@@ -45,6 +61,15 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     memcpy(b, str, (size - (b - buf)) * sizeof(wchar_t));
     b = (wchar_t *)HeapReAlloc(GetProcessHeap(), 0, buf, size * sizeof(wchar_t));
     return b ? b : buf;
+}
+
+// Function to replace double quotes with single quotes
+void replace_double_with_single_quotes(wchar_t *str) {
+    wchar_t *modified_str = replace_smart(str, L"\"", L"'");
+    if (modified_str) {
+        wcscpy(str, modified_str);
+        HeapFree(GetProcessHeap(), 0, modified_str);
+    }
 }
 
 // Function to check if the process is running under WOW64 (32-bit process on 64-bit Windows)
@@ -163,6 +188,26 @@ int mainCRTStartup(void) {
             }
         }
     }
+
+    /*
+    Replace double quotes with single quotes in the cmdline
+
+    This is for invokations that use double quotes with arguments that have spaces in them
+    This causes issues with pwsh parsing the invokation when you call the wrapper directly
+
+    e.g. 
+    powershell.exe Start-Process -Verb RunAs -FilePath "path to EasyAntiCheat_EOS_Setup.exe" -ArgumentList "install ****" 
+    turns into: 
+    pwsh -c Start-Process -Verb RunAs -FilePath 'path to EasyAntiCheat_EOS_Setup.exe' -ArgumentList 'install ****'
+    */
+
+    replace_double_with_single_quotes(cmdlineW);
+
+    // Debugging strings for my sanity
+    /*
+    log_to_file(L"Final command line passed to pwsh:");
+    log_to_file(cmdlineW);
+    */
 
     // Execute the command through pwsh.exe
     CreateProcessW(pwsh_pathW, cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);

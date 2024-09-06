@@ -12,7 +12,8 @@ static inline BOOL is_single_or_last_option(WCHAR *opt) {
             !_wcsnicmp(opt, L"-m", 2) || !_wcsnicmp(opt, L"-s", 2));
 }
 
-// Function to replace occurrences of a substring in a string
+/* Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; Credits to the there mentioned authors*/
+/* replaces in the string "str" all the occurrences of the string "sub" with the string "rep" */
 static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     size_t slen = wcslen(sub);
     size_t rlen = wcslen(rep);

@@ -66,6 +66,8 @@ Set-Alias gwmi Get-WmiObject
 #
 # In theory this should also fix other electron apps with this issue.
 
+$EnableLogging = $false  # Set this to $true to enable logging
+
 function Start-Process {
     [CmdletBinding()]
     param(
@@ -97,32 +99,39 @@ function Start-Process {
 
         [string]$WorkingDirectory,
 
-        [string]$Verb
+        [string]$Verb,
+
+        [switch]$EnableLogging  # New switch to control logging
     )
 
-    # Log function parameters to a file
-    $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
-    $logEntry = "$(Get-Date) - Starting process: $FilePath with arguments: $($ArgumentList -join ' ')"
-    Add-Content -Path $logFilePath -Value $logEntry
+    # Function to handle logging only if enabled
+    function Log-Message {
+        param (
+            [string]$Message
+        )
+        if ($EnableLogging) {
+            $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
+            $logEntry = "$(Get-Date) - $Message"
+            Add-Content -Path $logFilePath -Value $logEntry
+        }
+    }
+
+    Log-Message "Starting process: $FilePath with arguments: $($ArgumentList -join ' ')"
 
     try {
         # Check if the file exists at the specified path
         if (-not (Test-Path $FilePath -PathType Leaf)) {
-            $logEntry = "$(Get-Date) - File not found: $FilePath"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "File not found: $FilePath"
             throw "File not found: $FilePath"
         }
 
         # Check if the file extension is .bat and rewrite the command if needed
         if ([System.IO.Path]::GetExtension($FilePath).ToLower() -eq '.bat') {
-            $logEntry = "$(Get-Date) - Batch file detected: $FilePath"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Batch file detected: $FilePath"
 
             $fileContent = Get-Content $FilePath -Raw
             if ($fileContent -match '\(echo %ERRORLEVEL%\) >') {
-                $logEntry = "$(Get-Date) - Rewriting batch file: $FilePath"
-                Add-Content -Path $logFilePath -Value $logEntry
-
+                Log-Message "Rewriting batch file: $FilePath"
                 $fileContent = $fileContent -replace '\(echo %ERRORLEVEL%\) >', 'echo %ERRORLEVEL% >'
                 Set-Content $FilePath -Value $fileContent
             }
@@ -144,41 +153,35 @@ function Start-Process {
 
         # Set working directory if provided
         if ($WorkingDirectory) {
-            $logEntry = "$(Get-Date) - Setting working directory: $WorkingDirectory"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Setting working directory: $WorkingDirectory"
             $processStartInfo.WorkingDirectory = $WorkingDirectory
         }
 
         # Set verb if provided
         if ($Verb) {
-            $logEntry = "$(Get-Date) - Setting verb: $Verb"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Setting verb: $Verb"
             $processStartInfo.Verb = $Verb
         }
 
         # Handle input/output redirection
         if ($RedirectStandardOutput) {
-            $logEntry = "$(Get-Date) - Redirecting standard output to: $RedirectStandardOutput"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Redirecting standard output to: $RedirectStandardOutput"
             $processStartInfo.RedirectStandardOutput = $true
             $processStartInfo.StandardOutputFileName = $RedirectStandardOutput
         }
         if ($RedirectStandardError) {
-            $logEntry = "$(Get-Date) - Redirecting standard error to: $RedirectStandardError"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Redirecting standard error to: $RedirectStandardError"
             $processStartInfo.RedirectStandardError = $true
             $processStartInfo.StandardErrorFileName = $RedirectStandardError
         }
         if ($RedirectStandardInput) {
-            $logEntry = "$(Get-Date) - Redirecting standard input from: $RedirectStandardInput"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Redirecting standard input from: $RedirectStandardInput"
             $processStartInfo.RedirectStandardInput = $true
         }
 
         # If credentials provided, load them
         if ($Credential) {
-            $logEntry = "$(Get-Date) - Using provided credentials for: $($Credential.UserName)"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Using provided credentials for: $($Credential.UserName)"
             $processStartInfo.UserName = $Credential.UserName
             $password = $Credential.GetNetworkCredential().Password
             $processStartInfo.Password = (ConvertTo-SecureString $password -AsPlainText -Force)
@@ -186,20 +189,17 @@ function Start-Process {
 
         # UseNewEnvironment flag (whether to inherit or create new environment variables)
         if ($UseNewEnvironment) {
-            $logEntry = "$(Get-Date) - Clearing environment variables for new process"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Clearing environment variables for new process"
             $processStartInfo.EnvironmentVariables.Clear()
         }
 
         # Start process
-        $logEntry = "$(Get-Date) - Starting process: $FilePath"
-        Add-Content -Path $logFilePath -Value $logEntry
+        Log-Message "Starting process: $FilePath"
         $process = [System.Diagnostics.Process]::Start($processStartInfo)
 
         # Log process start success
         if ($process) {
-            $logEntry = "$(Get-Date) - Process started successfully: $FilePath (PID: $($process.Id))"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Process started successfully: $FilePath (PID: $($process.Id))"
         }
 
         # If PassThru is specified, return the process object
@@ -209,18 +209,15 @@ function Start-Process {
 
         # Wait for the process to exit if the Wait switch is specified
         if ($Wait) {
-            $logEntry = "$(Get-Date) - Waiting for process to exit: $FilePath"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Waiting for process to exit: $FilePath"
             $process.WaitForExit()
 
             $exitCode = $process.ExitCode
-            $logEntry = "$(Get-Date) - Process exited with code: $exitCode"
-            Add-Content -Path $logFilePath -Value $logEntry
+            Log-Message "Process exited with code: $exitCode"
         }
 
     } catch {
-        $logEntry = "$(Get-Date) - Error starting process: $_"
-        Add-Content -Path $logFilePath -Value $logEntry
+        Log-Message "Error starting process: $_"
         throw $_
     }
 }

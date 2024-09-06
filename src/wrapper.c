@@ -13,7 +13,8 @@ static inline BOOL is_single_or_last_option(WCHAR *opt) {
 }
 
 /*
-// Function to log debug information to a file
+Function to log debug information to a file
+
 void log_to_file(const wchar_t *logMessage) {
     // Open the log file in append mode
     FILE *logFile = _wfopen(L"C:\\logfile.txt", L"a+");  // Adjust the path accordingly
@@ -26,10 +27,12 @@ void log_to_file(const wchar_t *logMessage) {
         wprintf(L"Failed to open log file\n");
     }
 }
-/*
+*/
 
-/* Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; Credits to the there mentioned authors*/
-/* replaces in the string "str" all the occurrences of the string "sub" with the string "rep" */
+/* 
+Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; 
+Credits to the there mentioned authors. replaces in the string "str" all the occurrences of the string "sub" with the string "rep" 
+*/
 static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     size_t slen = wcslen(sub);
     size_t rlen = wcslen(rep);

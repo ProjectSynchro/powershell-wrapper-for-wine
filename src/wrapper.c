@@ -1,7 +1,6 @@
 /* Wraps PowerShell command-line into correct syntax for pwsh.exe. */
 
 #include <windows.h>
-#include <winternl.h>
 #include <stdio.h>
 #include "shlwapi.h"
 
@@ -11,23 +10,6 @@ static inline BOOL is_single_or_last_option(WCHAR *opt) {
             !_wcsnicmp(opt, L"-f", 2) || !wcscmp(opt, L"-") || !_wcsnicmp(opt, L"-enc", 4) ||
             !_wcsnicmp(opt, L"-m", 2) || !_wcsnicmp(opt, L"-s", 2));
 }
-
-/*
-Function to log debug information to a file
-
-void log_to_file(const wchar_t *logMessage) {
-    // Open the log file in append mode
-    FILE *logFile = _wfopen(L"C:\\logfile.txt", L"a+");  // Adjust the path accordingly
-    if (logFile) {
-        // Write the log message to the file
-        fwprintf(logFile, L"%s\n", logMessage);
-        // Close the file
-        fclose(logFile);
-    } else {
-        wprintf(L"Failed to open log file\n");
-    }
-}
-*/
 
 /* 
 Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; 
@@ -70,7 +52,7 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
 void replace_double_with_single_quotes(wchar_t *str) {
     wchar_t *modified_str = replace_smart(str, L"\"", L"'");
     if (modified_str) {
-        wcscpy(str, modified_str);
+        wcscpy_s(str, wcslen(modified_str) + 1, modified_str);
         HeapFree(GetProcessHeap(), 0, modified_str);
     }
 }
@@ -91,19 +73,16 @@ void get_program_files_path(wchar_t *path, size_t size) {
     }
 }
 
-__attribute__((externally_visible)) // for -fwhole-program
-int mainCRTStartup(void) {
+int wmain(int argc, wchar_t *argv[]) {
     BOOL read_from_stdin = FALSE;
-    wchar_t cmdlineW[4096] = L"", pwsh_pathW[MAX_PATH] = L"", bufW[MAX_PATH] = L"", **argv;
+    wchar_t cmdlineW[4096] = L"", pwsh_pathW[MAX_PATH] = L"", bufW[MAX_PATH] = L"";
     DWORD exitcode;
     STARTUPINFOW si = {0};
     PROCESS_INFORMATION pi = {0};
-    int i, j, argc;
-
-    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    int i, j;
 
     // Get the correct Program Files path based on the process architecture
-    get_program_files_path(pwsh_pathW, MAX_PATH + 1);
+    get_program_files_path(pwsh_pathW, MAX_PATH);
 
     // Set environment variable to disable color rendering output 
     _wputenv_s(L"NO_COLOR", L"1");
@@ -121,8 +100,8 @@ int mainCRTStartup(void) {
                 read_from_stdin = TRUE;
                 continue;
             } else {
-                fputs("Invalid usage", stderr);
-                exit(1);
+                fputws(L"Invalid usage\n", stderr);
+                return 1;
             }
         }
         if (!_wcsnicmp(argv[j], L"-ve", 3)) {
@@ -132,18 +111,20 @@ int mainCRTStartup(void) {
         if (!_wcsnicmp(argv[j], L"-nop", 4)) {
             continue;
         }
-        wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" ");
+        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), argv[j]);
     }
 
     // Insert '-c' if necessary
     if (argv[i] && _wcsnicmp(argv[i - 1], L"-c", 2) && _wcsnicmp(argv[i - 1], L"-enc", 4) &&
         _wcsnicmp(argv[i - 1], L"-f", 2) && _wcsnicmp(argv[i], L"/c", 2)) {
-        wcscat(cmdlineW, L" -c ");
+        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" -c ");
     }
 
     // Concatenate the rest of the arguments into the new cmdline
     for (j = i; j < argc; j++) {
-        wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" ");
+        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), argv[j]);
     }
 
     // Support pipeline to handle something like "$(get-date) | powershell -"
@@ -157,25 +138,25 @@ int mainCRTStartup(void) {
         if (type != FILE_TYPE_CHAR) { // Not redirected (FILE_TYPE_PIPE or FILE_TYPE_DISK)
             // Check if the last argument is "-" and the second-to-last argument is not "-c"
             if (!wcscmp(argv[argc - 1], L"-") && _wcsnicmp(argv[argc - 2], L"-c", 2)) {
-                wcscat(cmdlineW, L" -c "); // Append "-c" to cmdlineW
+                wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" -c "); // Append "-c" to cmdlineW
             }
-            wcscat(cmdlineW, L" "); // Append a space to cmdlineW
+            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" "); // Append a space to cmdlineW
             // Read input line by line and append to cmdlineW after converting to wide characters
             while (fgets(line, 4096, stdin) != NULL) {
                 mbstowcs(defline, line, 4096); // Convert input line to wide characters
-                wcscat(cmdlineW, defline);    // Append converted line to cmdlineW
+                wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), defline);    // Append converted line to cmdlineW
             }
         }
     } // End support pipeline
 
     // Replace incompatible commands/strings in the cmdline fed to pwsh.exe
-    if (GetEnvironmentVariableW(L"PSHACKS", bufW, MAX_PATH + 1)) {
+    if (GetEnvironmentVariableW(L"PSHACKS", bufW, MAX_PATH)) {
         WCHAR buf_fromW[MAX_PATH];
         WCHAR buf_toW[MAX_PATH];
         WCHAR *buf_replacedW = NULL;
 
-        if (GetEnvironmentVariableW(L"PS_FROM", buf_fromW, MAX_PATH + 1) &&
-            GetEnvironmentVariableW(L"PS_TO", buf_toW, MAX_PATH + 1)) {
+        if (GetEnvironmentVariableW(L"PS_FROM", buf_fromW, MAX_PATH) &&
+            GetEnvironmentVariableW(L"PS_TO", buf_toW, MAX_PATH)) {
             wchar_t *bufferA, *bufferB = 0;
 
             wchar_t *tokenA = wcstok_s(buf_fromW, L"¶", &bufferA);
@@ -183,7 +164,7 @@ int mainCRTStartup(void) {
 
             while (tokenA && tokenB) {
                 buf_replacedW = replace_smart(cmdlineW, tokenA, tokenB);
-                wcscpy(cmdlineW, buf_replacedW);
+                wcscpy_s(cmdlineW, wcslen(buf_replacedW) + 1, buf_replacedW);
                 HeapFree(GetProcessHeap(), 0, buf_replacedW);
 
                 tokenA = wcstok_s(NULL, L"¶", &bufferA);
@@ -194,7 +175,6 @@ int mainCRTStartup(void) {
 
     /*
     Replace double quotes with single quotes in the cmdline
-
     This is for invokations that use double quotes with arguments that have spaces in them
     This causes issues with pwsh parsing the invokation when you call the wrapper directly
 
@@ -203,14 +183,7 @@ int mainCRTStartup(void) {
     turns into: 
     pwsh -c Start-Process -Verb RunAs -FilePath 'path to EasyAntiCheat_EOS_Setup.exe' -ArgumentList 'install ****'
     */
-
     replace_double_with_single_quotes(cmdlineW);
-
-    // Debugging strings for my sanity
-    /*
-    log_to_file(L"Final command line passed to pwsh:");
-    log_to_file(cmdlineW);
-    */
 
     // Execute the command through pwsh.exe
     CreateProcessW(pwsh_pathW, cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);
@@ -218,7 +191,6 @@ int mainCRTStartup(void) {
     GetExitCodeProcess(pi.hProcess, &exitcode);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    LocalFree(argv);
 
-    exit(exitcode);
+    return exitcode;
 }

@@ -20,8 +20,8 @@ DIST_ZIP_DIR = dist/zip
 DIST_TAR_DIR = dist/tar
 
 # Executable Names
-TARGET64 = $(BUILD_DIR64)/powershell64.exe
-TARGET32 = $(BUILD_DIR32)/powershell32.exe
+TARGET64 = powershell64.exe
+TARGET32 = powershell32.exe
 
 # Distribution Archives
 ZIP_ARCHIVE = powershell-wrapper.zip

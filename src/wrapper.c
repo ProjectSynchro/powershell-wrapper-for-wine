@@ -1,5 +1,6 @@
 /* Wraps PowerShell command-line into correct syntax for pwsh.exe. */
 
+#include <wchar.h>
 #include <windows.h>
 #include <stdio.h>
 #include <shlwapi.h>
@@ -114,16 +115,37 @@ BOOL is_input_from_pipeline() {
     return FALSE;
 }
 
-// Function to escape double quotes in a string
-void escape_quotes(LPCWSTR input, LPWSTR output, size_t output_size) {
+// Function to escape double quotes and remove unnecessary single quotes
+void escape_and_fix_quotes(LPCWSTR input, LPWSTR output, size_t output_size) {
+    // Step 1: Escape all double quotes
     wchar_t *escaped_str = replace_smart((wchar_t *)input, L"\"", L"\\\"");
-    if (escaped_str) {
-        wcsncpy_s(output, output_size, escaped_str, _TRUNCATE);
-        HeapFree(GetProcessHeap(), 0, escaped_str);
-    } else {
-        // If replace_smart failed, copy the input as-is
+    if (escaped_str == NULL) {
+        // If replacement failed, copy input as-is
         wcsncpy_s(output, output_size, input, _TRUNCATE);
+        return;
     }
+
+    // Step 2: Remove single quotes immediately after escaped double quotes (\"')
+    wchar_t *temp1 = replace_smart(escaped_str, L"\\\"'", L"\\\"");
+    HeapFree(GetProcessHeap(), 0, escaped_str);
+    if (temp1 == NULL) {
+        // If replacement failed, copy escaped_str as-is
+        wcsncpy_s(output, output_size, L"", _TRUNCATE); // Empty string
+        return;
+    }
+
+    // Step 3: Remove single quotes immediately before escaped double quotes ('\")
+    wchar_t *temp2 = replace_smart(temp1, L"'\\\"", L"\\\"");
+    HeapFree(GetProcessHeap(), 0, temp1);
+    if (temp2 == NULL) {
+        // If replacement failed, copy temp1 as-is
+        wcsncpy_s(output, output_size, temp1, _TRUNCATE);
+        return;
+    }
+
+    // Step 4: Copy the final string to output
+    wcsncpy_s(output, output_size, temp2, _TRUNCATE);
+    HeapFree(GetProcessHeap(), 0, temp2);
 }
 
 // Function to perform command/string replacements based on environment variables
@@ -143,7 +165,12 @@ void apply_environment_replacements(LPWSTR cmdline) {
 
             while (tokenA && tokenB) {
                 buf_replacedW = replace_smart(cmdline, tokenA, tokenB);
-                wcscpy_s(cmdline, wcslen(buf_replacedW) + 1, buf_replacedW);
+                if (buf_replacedW == NULL) {
+                    // Handle memory allocation failure
+                    fwprintf(stderr, L"Failed to replace string in cmdline.\n");
+                    return;
+                }
+                wcscpy_s(cmdline, MAX_PATH, buf_replacedW);
                 HeapFree(GetProcessHeap(), 0, buf_replacedW);
 
                 tokenA = wcstok_s(NULL, L"¶", &bufferA);
@@ -152,6 +179,31 @@ void apply_environment_replacements(LPWSTR cmdline) {
         }
     }
 }
+
+#ifdef ENABLE_DEBUG_LOG
+// Function to log the Command Line to a File
+static void LogCommandLine(LPCWSTR cmdline) {
+    // Open the log file in append mode with UTF-8 encoding
+    FILE *logFile = _wfopen(L"C:\\debug.log", L"a, ccs=UTF-8");
+    if (logFile) {
+        // Write the timestamp and command line to the log file
+        fwprintf(logFile, L"[%ls] Command line: %ls\n", __DATE__ L" " __TIME__, cmdline);
+
+        // Close the log file
+        fclose(logFile);
+    } else {
+        // If the log file couldn't be opened, optionally handle the error
+        // For example, write to stderr (optional)
+        fwprintf(stderr, L"Failed to open log file for debugging.\n");
+    }
+}
+
+// Define a macro for logging
+#define LOG_CMDLINE(cmdline) LogCommandLine(cmdline)
+#else
+// Define a no-op macro when debugging is disabled
+#define LOG_CMDLINE(cmdline) ((void)0)
+#endif
 
 int wmain() {
     wchar_t cmdlineW[8192] = L"", pwsh_pathW[MAX_PATH] = L"", pwsh_exeW[MAX_PATH] = L"";
@@ -170,6 +222,11 @@ int wmain() {
 
     // Set environment variable to disable color rendering output
     _wputenv_s(L"NO_COLOR", L"1");
+
+    // Set environment variable to enable debugging on the powershell side
+    #ifdef ENABLE_DEBUG_LOG
+    _wputenv_s(L"LOG_DEBUG", L"1");
+    #endif
 
     // Get the full command line
     LPCWSTR cmdline_full = GetCommandLineW();
@@ -190,9 +247,9 @@ int wmain() {
             // Enclose the command in double quotes
             wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" \"");
 
-            // Escape any double quotes in argsW
+            // Escape any double quotes in argsW and fix single quotes
             wchar_t escaped_args[8192];
-            escape_quotes(argsW, escaped_args, sizeof(escaped_args) / sizeof(wchar_t));
+            escape_and_fix_quotes(argsW, escaped_args, sizeof(escaped_args) / sizeof(wchar_t));
 
             wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), escaped_args);
             wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L"\"");
@@ -206,8 +263,11 @@ int wmain() {
         wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" -c -");
     }
 
-    // Perform command/string replacements based on environment variables
+    // Apply environment replacements if any
     apply_environment_replacements(cmdlineW);
+
+    // **Debugging: Log the Command Line**
+    LOG_CMDLINE(cmdlineW);
 
     // Execute the command through pwsh.exe
     if (!CreateProcessW(pwsh_pathW, cmdlineW, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {

@@ -58,15 +58,13 @@ Set-Alias gwmi Get-WmiObject
 
 # Add a reimplementation of Start-Process to workaround issues with Wine's CMD.
 # For some reason (echo %ERRORLEVEL%\) > does not pipe to a file like it should but
-# echo %ERRORLEVEL% > does. This cmdlet will check for batch files are rewrite that
+# echo %ERRORLEVEL% > does. This cmdlet will check for batch files and rewrite that
 # string if it exists.
 #
 # Fixes the issues seen in the RSI Launcher when it makes use of
 # sudo-prompt: https://github.com/jorangreef/sudo-prompt
 #
 # In theory this should also fix other electron apps with this issue.
-
-$EnableLogging = $false  # Set this to $true to enable logging
 
 function Start-Process {
     [CmdletBinding()]
@@ -99,9 +97,7 @@ function Start-Process {
 
         [string]$WorkingDirectory,
 
-        [string]$Verb,
-
-        [switch]$EnableLogging  # New switch to control logging
+        [string]$Verb
     )
 
     # Function to handle logging only if enabled
@@ -109,7 +105,7 @@ function Start-Process {
         param (
             [string]$Message
         )
-        if ($EnableLogging) {
+        if ($env:LOG_DEBUG) {
             $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
             $logEntry = "$(Get-Date) - $Message"
             Add-Content -Path $logFilePath -Value $logEntry

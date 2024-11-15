@@ -39,13 +39,11 @@ debug: all
 
 # 64-bit Executable
 $(TARGET64): $(SRCS)
-	@mkdir -p $(BUILD_DIR64)
 	@echo "Building 64-bit executable..."
 	$(CC64) $(SRCS) $(CFLAGS) $(LDFLAGS) -o $@
 
 # 32-bit Executable
 $(TARGET32): $(SRCS)
-	@mkdir -p $(BUILD_DIR32)
 	@echo "Building 32-bit executable..."
 	$(CC32) $(SRCS) $(CFLAGS) $(LDFLAGS) -o $@
 

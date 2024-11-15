@@ -16,3 +16,5 @@
    - These are laid out like this: `/profile.ps1, /32/powershell.exe, /64/powershell.exe`
 - v2.1.3 - Fix [ProjectSynchro/powershell-wrapper-for-wine#2](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/issues/2)
    - This fixes installing the EAC service in the RSI Launcher.
+- v2.2.0 - Add debugging and fix single quotes if they are beside an escaped double quote.
+   - This fixes the edge case seen when running the RSI Launcher's installer-support.exe binary.

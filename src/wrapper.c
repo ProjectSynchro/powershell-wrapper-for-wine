@@ -1,44 +1,42 @@
 /* Wraps PowerShell command-line into correct syntax for pwsh.exe. */
 
-#include <wchar.h>
 #include <windows.h>
+#include <winternl.h>
 #include <stdio.h>
-#include <shlwapi.h>
+#include "shlwapi.h"
 
-// Function to get the arguments part of the command line, skipping the executable name
-LPCWSTR SkipProgramName(LPCWSTR cmdline) {
-    LPCWSTR p = cmdline;
-
-    // Skip leading whitespace
-    while (*p && iswspace(*p)) p++;
-
-    if (*p == L'"') {
-        p++;
-        while (*p) {
-            if (*p == L'"') {
-                if (*(p + 1) == L'"') {
-                    p += 2;
-                } else {
-                    p++;
-                    break;
-                }
-            } else {
-                p++;
-            }
-        }
-    } else {
-        while (*p && !iswspace(*p)) p++;
-    }
-
-    // Skip whitespace between program name and arguments
-    while (*p && iswspace(*p)) p++;
-
-    return p;
+// Function to check if an option is a single or last option
+static inline BOOL is_single_or_last_option(WCHAR *opt) {
+    return ((!_wcsnicmp(opt, L"-c", 2) && _wcsnicmp(opt, L"-config", 7)) || !_wcsnicmp(opt, L"-n", 2) ||
+            !_wcsnicmp(opt, L"-f", 2) || !wcscmp(opt, L"-") || !_wcsnicmp(opt, L"-enc", 4) ||
+            !_wcsnicmp(opt, L"-m", 2) || !_wcsnicmp(opt, L"-s", 2));
 }
 
+#ifdef ENABLE_DEBUG_LOG
+// Function to log the Command Line to a File
+static void LogCommandLine(LPCWSTR cmdline) {
+    HANDLE hFile = CreateFileW(L"C:\\debug.log", FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                               NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile != INVALID_HANDLE_VALUE) {
+        SetFilePointer(hFile, 0, NULL, FILE_END);
+        WCHAR buffer[1024];
+        wsprintfW(buffer, L"[%hs %hs] Command line: %ls\r\n", __DATE__, __TIME__, cmdline);
+        DWORD written;
+        WriteFile(hFile, buffer, lstrlenW(buffer) * sizeof(WCHAR), &written, NULL);
+        CloseHandle(hFile);
+    }
+}
+
+// Define a macro for logging
+#define LOG_CMDLINE(cmdline) LogCommandLine(cmdline)
+#else
+// Define a no-op macro when debugging is disabled
+#define LOG_CMDLINE(cmdline) ((void)0)
+#endif
+
 /*
-Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain;
-Credits to the there mentioned authors. Replaces in the string "str" all the occurrences of the string "sub" with the string "rep".
+Following function taken from https://creativeandcritical.net/downloads/replacebench.c which is in public domain; 
+Credits to the there mentioned authors. Replaces in the string "str" all the occurrences of the string "sub" with the string "rep" 
 */
 static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     size_t slen = wcslen(sub);
@@ -73,6 +71,14 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     return b ? b : buf;
 }
 
+// Function to replace double quotes with single quotes
+void replace_double_with_single_quotes(wchar_t *str) {
+    wchar_t *modified_str = replace_smart(str, L"\"", L"'");
+    if (modified_str) {
+        wcscpy(str, modified_str);
+        HeapFree(GetProcessHeap(), 0, modified_str);
+    }
+}
 
 // Function to check if the process is running under WOW64 (32-bit process on 64-bit Windows)
 BOOL is_wow64() {
@@ -90,87 +96,104 @@ void get_program_files_path(wchar_t *path, size_t size) {
     }
 }
 
-// Function to determine if '-c' should be added to the command line
-BOOL should_add_c_option(LPCWSTR args) {
-    // Check if the first argument starts with '-' or '/'
-    if (*args == L'-' || *args == L'/') {
-        LPCWSTR opt = args + 1;
-        if (!_wcsnicmp(opt, L"c", 1) || !_wcsnicmp(opt, L"Command", 7) ||
-            !_wcsnicmp(opt, L"enc", 3) || !_wcsnicmp(opt, L"EncodedCommand", 14) ||
-            !_wcsnicmp(opt, L"file", 4) || !_wcsnicmp(opt, L"f", 1)) {
-            return FALSE;
+__attribute__((externally_visible)) // for -fwhole-program
+int mainCRTStartup(void) {
+    BOOL read_from_stdin = FALSE;
+    wchar_t cmdlineW[4096] = L"", pwsh_pathW[MAX_PATH] = L"", bufW[MAX_PATH] = L"", **argv;
+    DWORD exitcode;
+    STARTUPINFOW si = {0};
+    PROCESS_INFORMATION pi = {0};
+    int i, j, argc;
+
+    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    // Get the correct Program Files path based on the process architecture
+    get_program_files_path(pwsh_pathW, MAX_PATH + 1);
+
+    // Set environment variable to disable color rendering output 
+    _wputenv_s(L"NO_COLOR", L"1");
+    // or _wputenv_s(L"TERM", L"xterm-mono");
+
+    // Set environment variable to enable debugging on the powershell side
+    #ifdef ENABLE_DEBUG_LOG
+    _wputenv_s(L"LOG_DEBUG", L"1");
+    #endif
+
+    // Concatenate options into new cmdline, handling some incompatibilities
+    for (i = 1; argv[i] && !wcsncmp(argv[i], L"-", 1); i++) {
+        if (!is_single_or_last_option(argv[i])) i++;
+        if (!argv[i]) break;
+    }
+
+    for (j = 1; j < i; j++) {
+        if (!wcscmp(L"-", argv[j])) {
+            if (j == (argc - 1)) {
+                read_from_stdin = TRUE;
+                continue;
+            } else {
+                fputs("Invalid usage", stderr);
+                exit(1);
+            }
         }
-    }
-    return TRUE;
-}
-
-// Function to check if input is coming from a pipeline
-BOOL is_input_from_pipeline() {
-    HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
-    DWORD mode = 0;
-    if (!GetConsoleMode(hStdin, &mode)) {
-        // If GetConsoleMode fails, it means the input is not from a console, so it's from a pipeline
-        return TRUE;
-    }
-    return FALSE;
-}
-
-// Function to escape double quotes and remove unnecessary single quotes
-void escape_and_fix_quotes(LPCWSTR input, LPWSTR output, size_t output_size) {
-    // Step 1: Escape all double quotes
-    wchar_t *escaped_str = replace_smart((wchar_t *)input, L"\"", L"\\\"");
-    if (escaped_str == NULL) {
-        // If replacement failed, copy input as-is
-        wcsncpy_s(output, output_size, input, _TRUNCATE);
-        return;
+        if (!_wcsnicmp(argv[j], L"-ve", 3)) {
+            j++;
+            continue;
+        }
+        if (!_wcsnicmp(argv[j], L"-nop", 4)) {
+            continue;
+        }
+        wcscat(wcscat(cmdlineW, L" "), argv[j]);
     }
 
-    // Step 2: Remove single quotes immediately after escaped double quotes (\"')
-    wchar_t *temp1 = replace_smart(escaped_str, L"\\\"'", L"\\\"");
-    HeapFree(GetProcessHeap(), 0, escaped_str);
-    if (temp1 == NULL) {
-        // If replacement failed, copy escaped_str as-is
-        wcsncpy_s(output, output_size, L"", _TRUNCATE); // Empty string
-        return;
+    // Insert '-c' if necessary
+    if (argv[i] && _wcsnicmp(argv[i - 1], L"-c", 2) && _wcsnicmp(argv[i - 1], L"-enc", 4) &&
+        _wcsnicmp(argv[i - 1], L"-f", 2) && _wcsnicmp(argv[i], L"/c", 2)) {
+        wcscat(cmdlineW, L" -c ");
     }
 
-    // Step 3: Remove single quotes immediately before escaped double quotes ('\")
-    wchar_t *temp2 = replace_smart(temp1, L"'\\\"", L"\\\"");
-    HeapFree(GetProcessHeap(), 0, temp1);
-    if (temp2 == NULL) {
-        // If replacement failed, copy temp1 as-is
-        wcsncpy_s(output, output_size, temp1, _TRUNCATE);
-        return;
+    // Concatenate the rest of the arguments into the new cmdline
+    for (j = i; j < argc; j++) {
+        wcscat(wcscat(cmdlineW, L" "), argv[j]);
     }
 
-    // Step 4: Copy the final string to output
-    wcsncpy_s(output, output_size, temp2, _TRUNCATE);
-    HeapFree(GetProcessHeap(), 0, temp2);
-}
+    // Support pipeline to handle something like "$(get-date) | powershell -"
+    if (read_from_stdin) {
+        WCHAR defline[4096]; // Buffer to store converted line
+        char line[4096];     // Buffer to store input line
+        HANDLE input = GetStdHandle(STD_INPUT_HANDLE); // Get the standard input handle
+        DWORD type = GetFileType(input);               // Get the file type of the input handle
 
-// Function to perform command/string replacements based on environment variables
-void apply_environment_replacements(LPWSTR cmdline) {
-    WCHAR bufW[MAX_PATH];
-    if (GetEnvironmentVariableW(L"PSHACKS", bufW, MAX_PATH)) {
+        // Check if input is redirected (e.g., via pipe)
+        if (type != FILE_TYPE_CHAR) { // Not redirected (FILE_TYPE_PIPE or FILE_TYPE_DISK)
+            // Check if the last argument is "-" and the second-to-last argument is not "-c"
+            if (!wcscmp(argv[argc - 1], L"-") && _wcsnicmp(argv[argc - 2], L"-c", 2)) {
+                wcscat(cmdlineW, L" -c "); // Append "-c" to cmdlineW
+            }
+            wcscat(cmdlineW, L" "); // Append a space to cmdlineW
+            // Read input line by line and append to cmdlineW after converting to wide characters
+            while (fgets(line, 4096, stdin) != NULL) {
+                mbstowcs(defline, line, 4096); // Convert input line to wide characters
+                wcscat(cmdlineW, defline);    // Append converted line to cmdlineW
+            }
+        }
+    } // End support pipeline
+
+    // Replace incompatible commands/strings in the cmdline fed to pwsh.exe
+    if (GetEnvironmentVariableW(L"PSHACKS", bufW, MAX_PATH + 1)) {
         WCHAR buf_fromW[MAX_PATH];
         WCHAR buf_toW[MAX_PATH];
         WCHAR *buf_replacedW = NULL;
 
-        if (GetEnvironmentVariableW(L"PS_FROM", buf_fromW, MAX_PATH) &&
-            GetEnvironmentVariableW(L"PS_TO", buf_toW, MAX_PATH)) {
+        if (GetEnvironmentVariableW(L"PS_FROM", buf_fromW, MAX_PATH + 1) &&
+            GetEnvironmentVariableW(L"PS_TO", buf_toW, MAX_PATH + 1)) {
             wchar_t *bufferA, *bufferB = 0;
 
             wchar_t *tokenA = wcstok_s(buf_fromW, L"¶", &bufferA);
             wchar_t *tokenB = wcstok_s(buf_toW, L"¶", &bufferB);
 
             while (tokenA && tokenB) {
-                buf_replacedW = replace_smart(cmdline, tokenA, tokenB);
-                if (buf_replacedW == NULL) {
-                    // Handle memory allocation failure
-                    fwprintf(stderr, L"Failed to replace string in cmdline.\n");
-                    return;
-                }
-                wcscpy_s(cmdline, MAX_PATH, buf_replacedW);
+                buf_replacedW = replace_smart(cmdlineW, tokenA, tokenB);
+                wcscpy(cmdlineW, buf_replacedW);
                 HeapFree(GetProcessHeap(), 0, buf_replacedW);
 
                 tokenA = wcstok_s(NULL, L"¶", &bufferA);
@@ -178,106 +201,31 @@ void apply_environment_replacements(LPWSTR cmdline) {
             }
         }
     }
-}
 
-#ifdef ENABLE_DEBUG_LOG
-// Function to log the Command Line to a File
-static void LogCommandLine(LPCWSTR cmdline) {
-    // Open the log file in append mode with UTF-8 encoding
-    FILE *logFile = _wfopen(L"C:\\debug.log", L"a, ccs=UTF-8");
-    if (logFile) {
-        // Write the timestamp and command line to the log file
-        fwprintf(logFile, L"[%ls] Command line: %ls\n", __DATE__ L" " __TIME__, cmdline);
+    /*
+    Replace double quotes with single quotes in the cmdline
 
-        // Close the log file
-        fclose(logFile);
-    } else {
-        // If the log file couldn't be opened, optionally handle the error
-        // For example, write to stderr (optional)
-        fwprintf(stderr, L"Failed to open log file for debugging.\n");
-    }
-}
+    This is for invokations that use double quotes with arguments that have spaces in them
+    This causes issues with pwsh parsing the invokation when you call the wrapper directly
 
-// Define a macro for logging
-#define LOG_CMDLINE(cmdline) LogCommandLine(cmdline)
-#else
-// Define a no-op macro when debugging is disabled
-#define LOG_CMDLINE(cmdline) ((void)0)
-#endif
+    e.g. 
+    powershell.exe Start-Process -Verb RunAs -FilePath "path to EasyAntiCheat_EOS_Setup.exe" -ArgumentList "install ****" 
+    turns into: 
+    pwsh -c Start-Process -Verb RunAs -FilePath 'path to EasyAntiCheat_EOS_Setup.exe' -ArgumentList 'install ****'
+    */
 
-int wmain() {
-    wchar_t cmdlineW[8192] = L"", pwsh_pathW[MAX_PATH] = L"", pwsh_exeW[MAX_PATH] = L"";
-    DWORD exitcode;
-    STARTUPINFOW si = {0};
-    PROCESS_INFORMATION pi = {0};
-
-    // Initialize STARTUPINFO structure
-    si.cb = sizeof(STARTUPINFOW);
-
-    // Get the correct Program Files path based on the process architecture
-    get_program_files_path(pwsh_pathW, MAX_PATH);
-
-    // Get the executable name (pwsh.exe)
-    wcscpy_s(pwsh_exeW, MAX_PATH, PathFindFileNameW(pwsh_pathW));
-
-    // Set environment variable to disable color rendering output
-    _wputenv_s(L"NO_COLOR", L"1");
-
-    // Set environment variable to enable debugging on the powershell side
-    #ifdef ENABLE_DEBUG_LOG
-    _wputenv_s(L"LOG_DEBUG", L"1");
-    #endif
-
-    // Get the full command line
-    LPCWSTR cmdline_full = GetCommandLineW();
-
-    // Skip the program name
-    LPCWSTR argsW = SkipProgramName(cmdline_full);
-
-    // Build the command line to pass to pwsh.exe
-    wcscpy_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L"\"");
-    wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), pwsh_exeW);
-    wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L"\"");
-
-    // Check if we need to add '-c' option
-    if (*argsW) {
-        if (should_add_c_option(argsW)) {
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" -c");
-
-            // Enclose the command in double quotes
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" \"");
-
-            // Escape any double quotes in argsW and fix single quotes
-            wchar_t escaped_args[8192];
-            escape_and_fix_quotes(argsW, escaped_args, sizeof(escaped_args) / sizeof(wchar_t));
-
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), escaped_args);
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L"\"");
-        } else {
-            // Append the rest of the arguments as is
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" ");
-            wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), argsW);
-        }
-    } else if (is_input_from_pipeline()) {
-        // If there's no arguments but input is from pipeline, we need to read from stdin
-        wcscat_s(cmdlineW, sizeof(cmdlineW) / sizeof(wchar_t), L" -c -");
-    }
-
-    // Apply environment replacements if any
-    apply_environment_replacements(cmdlineW);
+    replace_double_with_single_quotes(cmdlineW);
 
     // **Debugging: Log the Command Line**
     LOG_CMDLINE(cmdlineW);
 
     // Execute the command through pwsh.exe
-    if (!CreateProcessW(pwsh_pathW, cmdlineW, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
-        fwprintf(stderr, L"Failed to create process. Error code: %lu\n", GetLastError());
-        return 1;
-    }
+    CreateProcessW(pwsh_pathW, cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);
     WaitForSingleObject(pi.hProcess, INFINITE);
     GetExitCodeProcess(pi.hProcess, &exitcode);
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
+    LocalFree(argv);
 
-    return exitcode;
+    exit(exitcode);
 }

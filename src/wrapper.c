@@ -71,12 +71,13 @@ static inline wchar_t *replace_smart(wchar_t *str, wchar_t *sub, wchar_t *rep) {
     return b ? b : buf;
 }
 
-// Function to replace double quotes with single quotes
-void replace_double_with_single_quotes(wchar_t *str) {
-    wchar_t *modified_str = replace_smart(str, L"\"", L"'");
-    if (modified_str) {
-        wcscpy(str, modified_str);
-        HeapFree(GetProcessHeap(), 0, modified_str);
+// Function to replace double quotes with single quotes in the cmdline
+void fix_quotes(wchar_t *str) {
+    // Replace all double quotes with single quotes
+    wchar_t *tmp = replace_smart(str, L"\"", L"\'");
+    if (tmp) {
+        wcscpy(str, tmp);
+        HeapFree(GetProcessHeap(), 0, tmp);
     }
 }
 
@@ -226,7 +227,7 @@ int mainCRTStartup(void) {
     pwsh -c Start-Process -Verb RunAs -FilePath 'path to EasyAntiCheat_EOS_Setup.exe' -ArgumentList 'install ****'
     */
 
-    replace_double_with_single_quotes(cmdlineW);
+    fix_quotes(cmdlineW);
 
     // **Debugging: Log the Command Line**
     LOG_CMDLINE(cmdlineW);

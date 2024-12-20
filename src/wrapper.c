@@ -142,7 +142,13 @@ int mainCRTStartup(void) {
         if (!_wcsnicmp(argv[j], L"-nop", 4)) {
             continue;
         }
-        wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        if (wcschr(argv[j], L' ') && argv[j][0] != L'\"') {
+            wcscat(cmdlineW, L" \"");
+            wcscat(cmdlineW, argv[j]);
+            wcscat(cmdlineW, L"\"");
+        } else {
+            wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        }
     }
 
     // Insert '-c' if necessary
@@ -153,7 +159,13 @@ int mainCRTStartup(void) {
 
     // Concatenate the rest of the arguments into the new cmdline
     for (j = i; j < argc; j++) {
-        wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        if (wcschr(argv[j], L' ') && argv[j][0] != L'\"') {
+            wcscat(cmdlineW, L" \"");
+            wcscat(cmdlineW, argv[j]);
+            wcscat(cmdlineW, L"\"");
+        } else {
+            wcscat(wcscat(cmdlineW, L" "), argv[j]);
+        }
     }
 
     // Support pipeline to handle something like "$(get-date) | powershell -"

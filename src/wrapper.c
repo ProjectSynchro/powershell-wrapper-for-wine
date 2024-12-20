@@ -13,25 +13,29 @@ static inline BOOL is_single_or_last_option(WCHAR *opt) {
 }
 
 #ifdef ENABLE_DEBUG_LOG
-// Function to log the Command Line to a File
-static void LogCommandLine(LPCWSTR cmdline) {
+// Function to log the Original and Processed Command Lines to a File
+static void LogCommandLine(LPCWSTR originalCmd, LPCWSTR processedCmd) {
     HANDLE hFile = CreateFileW(L"C:\\debug.log", FILE_APPEND_DATA, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile != INVALID_HANDLE_VALUE) {
         SetFilePointer(hFile, 0, NULL, FILE_END);
-        WCHAR buffer[1024];
-        wsprintfW(buffer, L"[%hs %hs] Command line: %ls\r\n", __DATE__, __TIME__, cmdline);
+        WCHAR buffer[2048];
+        wsprintfW(buffer, L"[%hs %hs] Original Command Line: %ls\r\n", __DATE__, __TIME__, originalCmd);
         DWORD written;
         WriteFile(hFile, buffer, lstrlenW(buffer) * sizeof(WCHAR), &written, NULL);
+        
+        wsprintfW(buffer, L"[%hs %hs] Processed Command Line: %ls\r\n", __DATE__, __TIME__, processedCmd);
+        WriteFile(hFile, buffer, lstrlenW(buffer) * sizeof(WCHAR), &written, NULL);
+        
         CloseHandle(hFile);
     }
 }
 
-// Define a macro for logging
-#define LOG_CMDLINE(cmdline) LogCommandLine(cmdline)
+// Update the macro to log both original and processed command lines
+#define LOG_CMDLINE(original, processed) LogCommandLine(original, processed)
 #else
 // Define a no-op macro when debugging is disabled
-#define LOG_CMDLINE(cmdline) ((void)0)
+#define LOG_CMDLINE(original, processed) ((void)0)
 #endif
 
 /*
@@ -106,7 +110,10 @@ int mainCRTStartup(void) {
     PROCESS_INFORMATION pi = {0};
     int i, j, argc;
 
-    argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    // Capture the original command line
+    LPCWSTR originalCmd = GetCommandLineW();
+
+    argv = CommandLineToArgvW(originalCmd, &argc);
 
     // Get the correct Program Files path based on the process architecture
     get_program_files_path(pwsh_pathW, MAX_PATH + 1);
@@ -229,8 +236,8 @@ int mainCRTStartup(void) {
 
     fix_quotes(cmdlineW);
 
-    // **Debugging: Log the Command Line**
-    LOG_CMDLINE(cmdlineW);
+    // **Debugging: Log the Original and Processed Command Lines**
+    LOG_CMDLINE(originalCmd, cmdlineW);
 
     // Execute the command through pwsh.exe
     CreateProcessW(pwsh_pathW, cmdlineW, 0, 0, 0, 0, 0, 0, &si, &pi);

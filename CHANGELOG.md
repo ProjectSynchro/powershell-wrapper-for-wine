@@ -18,3 +18,6 @@
    - This fixes installing the EAC service in the RSI Launcher.
 - v2.2.0 - Add debugging and fix single quotes if they are beside an escaped double quote.
    - This fixes the edge case seen when running the RSI Launcher's installer-support.exe binary.
+- v2.2.1 - Fix debugging and revert quote replacement changes.
+   - This fixes the edge case seen when running the vcredist binary in the RSI Launcher.
+   - The EAC service will fail to install due to how it is invokved, I'll have to rewrite this in something that can use regex a bit better.

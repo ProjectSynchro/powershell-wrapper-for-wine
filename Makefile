@@ -28,12 +28,12 @@ debug: all
 # 64-bit Executable
 $(TARGET64): $(SRCS)
 	@echo "Building 64-bit executable..."
-	GOOS=windows GOARCH=amd64 $(GO) build -o $(TARGET64) $(SRCS)
+	GOOS=windows GOARCH=amd64 $(GO) build -x -o $(TARGET64) $(SRCS)
 
 # 32-bit Executable
 $(TARGET32): $(SRCS)
 	@echo "Building 32-bit executable..."
-	GOOS=windows GOARCH=386 $(GO) build -o $(TARGET32) $(SRCS)
+	GOOS=windows GOARCH=386 $(GO) build -x -o $(TARGET32) $(SRCS)
 
 # Distribution Target
 dist: zip targz

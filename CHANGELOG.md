@@ -24,3 +24,4 @@
 - v3.0.0 - Port wrapper to Golang
    - Dealing with string manipulation in C was painful, this results in a larger binary but it is far easier to deal with edge cases.
    - Fully fix [ProjectSynchro/powershell-wrapper-for-wine#2](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/issues/2)
+- v3.0.1 - Ensure we pass through the child process status.. whoops

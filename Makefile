@@ -1,19 +1,8 @@
 # Compiler Definitions
-CC64 = x86_64-w64-mingw32-gcc
-CC32 = i686-w64-mingw32-gcc
+GO = go
 
 # Source Files
-SRCS = src/wrapper.c
-
-# Compiler Flags
-CFLAGS = -O1 -fno-ident -fno-stack-protector -fomit-frame-pointer -fno-unwind-tables -fno-asynchronous-unwind-tables -falign-functions=1 -falign-jumps=1 -falign-loops=1 -fwhole-program -mconsole -municode -mno-stack-arg-probe -Xlinker --stack=0x200000,0x200000 -Wall -Wextra -ffreestanding
-
-# Linker Flags
-LDFLAGS = -lurlmon -lkernel32 -lucrtbase -nostdlib -lshell32 -lshlwapi -s
-
-# Build Directories
-BUILD_DIR64 = build/x64
-BUILD_DIR32 = build/x86
+SRCS = src/wrapper.go
 
 # Distribution Directories
 DIST_ZIP_DIR = dist/zip
@@ -34,19 +23,17 @@ TAR_ARCHIVE = powershell-wrapper.tar.gz
 all: $(TARGET32) $(TARGET64)
 
 # Debug Build
-debug: CFLAGS += -DENABLE_DEBUG_LOG -g
-debug: LDFLAGS += -luser32
 debug: all
 
 # 64-bit Executable
 $(TARGET64): $(SRCS)
 	@echo "Building 64-bit executable..."
-	$(CC64) $(SRCS) $(CFLAGS) $(LDFLAGS) -o $@
+	GOOS=windows GOARCH=amd64 $(GO) build -o $(TARGET64) $(SRCS)
 
 # 32-bit Executable
 $(TARGET32): $(SRCS)
 	@echo "Building 32-bit executable..."
-	$(CC32) $(SRCS) $(CFLAGS) $(LDFLAGS) -o $@
+	GOOS=windows GOARCH=386 $(GO) build -o $(TARGET32) $(SRCS)
 
 # Distribution Target
 dist: zip targz

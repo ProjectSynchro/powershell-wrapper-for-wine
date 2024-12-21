@@ -101,33 +101,33 @@ function Start-Process {
     )
 
     # Function to handle logging only if enabled
-    function Log-Message {
+    function Write-Message {
         param (
             [string]$Message
         )
         if ($env:LOG_DEBUG) {
-            $logFilePath = "$env:USERPROFILE\ProcessLog.txt"
+            $logFilePath = "$env:USERPROFILE\pwsh_powershell_debug.log"
             $logEntry = "$(Get-Date) - $Message"
             Add-Content -Path $logFilePath -Value $logEntry
         }
     }
 
-    Log-Message "Starting process: $FilePath with arguments: $($ArgumentList -join ' ')"
+    Write-Message "Starting process: $FilePath with arguments: $($ArgumentList -join ' ')"
 
     try {
         # Check if the file exists at the specified path
         if (-not (Test-Path $FilePath -PathType Leaf)) {
-            Log-Message "File not found: $FilePath"
+            Write-Message "File not found: $FilePath"
             throw "File not found: $FilePath"
         }
 
         # Check if the file extension is .bat and rewrite the command if needed
         if ([System.IO.Path]::GetExtension($FilePath).ToLower() -eq '.bat') {
-            Log-Message "Batch file detected: $FilePath"
+            Write-Message "Batch file detected: $FilePath"
 
             $fileContent = Get-Content $FilePath -Raw
             if ($fileContent -match '\(echo %ERRORLEVEL%\) >') {
-                Log-Message "Rewriting batch file: $FilePath"
+                Write-Message "Rewriting batch file: $FilePath"
                 $fileContent = $fileContent -replace '\(echo %ERRORLEVEL%\) >', 'echo %ERRORLEVEL% >'
                 Set-Content $FilePath -Value $fileContent
             }
@@ -149,35 +149,35 @@ function Start-Process {
 
         # Set working directory if provided
         if ($WorkingDirectory) {
-            Log-Message "Setting working directory: $WorkingDirectory"
+            Write-Message "Setting working directory: $WorkingDirectory"
             $processStartInfo.WorkingDirectory = $WorkingDirectory
         }
 
         # Set verb if provided
         if ($Verb) {
-            Log-Message "Setting verb: $Verb"
+            Write-Message "Setting verb: $Verb"
             $processStartInfo.Verb = $Verb
         }
 
         # Handle input/output redirection
         if ($RedirectStandardOutput) {
-            Log-Message "Redirecting standard output to: $RedirectStandardOutput"
+            Write-Message "Redirecting standard output to: $RedirectStandardOutput"
             $processStartInfo.RedirectStandardOutput = $true
             $processStartInfo.StandardOutputFileName = $RedirectStandardOutput
         }
         if ($RedirectStandardError) {
-            Log-Message "Redirecting standard error to: $RedirectStandardError"
+            Write-Message "Redirecting standard error to: $RedirectStandardError"
             $processStartInfo.RedirectStandardError = $true
             $processStartInfo.StandardErrorFileName = $RedirectStandardError
         }
         if ($RedirectStandardInput) {
-            Log-Message "Redirecting standard input from: $RedirectStandardInput"
+            Write-Message "Redirecting standard input from: $RedirectStandardInput"
             $processStartInfo.RedirectStandardInput = $true
         }
 
         # If credentials provided, load them
         if ($Credential) {
-            Log-Message "Using provided credentials for: $($Credential.UserName)"
+            Write-Message "Using provided credentials for: $($Credential.UserName)"
             $processStartInfo.UserName = $Credential.UserName
             $password = $Credential.GetNetworkCredential().Password
             $processStartInfo.Password = (ConvertTo-SecureString $password -AsPlainText -Force)
@@ -185,17 +185,17 @@ function Start-Process {
 
         # UseNewEnvironment flag (whether to inherit or create new environment variables)
         if ($UseNewEnvironment) {
-            Log-Message "Clearing environment variables for new process"
+            Write-Message "Clearing environment variables for new process"
             $processStartInfo.EnvironmentVariables.Clear()
         }
 
         # Start process
-        Log-Message "Starting process: $FilePath"
+        Write-Message "Starting process: $FilePath"
         $process = [System.Diagnostics.Process]::Start($processStartInfo)
 
         # Log process start success
         if ($process) {
-            Log-Message "Process started successfully: $FilePath (PID: $($process.Id))"
+            Write-Message "Process started successfully: $FilePath (PID: $($process.Id))"
         }
 
         # If PassThru is specified, return the process object
@@ -205,15 +205,15 @@ function Start-Process {
 
         # Wait for the process to exit if the Wait switch is specified
         if ($Wait) {
-            Log-Message "Waiting for process to exit: $FilePath"
+            Write-Message "Waiting for process to exit: $FilePath"
             $process.WaitForExit()
 
             $exitCode = $process.ExitCode
-            Log-Message "Process exited with code: $exitCode"
+            Write-Message "Process exited with code: $exitCode"
         }
 
     } catch {
-        Log-Message "Error starting process: $_"
+        Write-Message "Error starting process: $_"
         throw $_
     }
 }

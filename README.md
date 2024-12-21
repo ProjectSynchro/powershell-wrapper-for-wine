@@ -10,7 +10,6 @@ For example 'powershell.exe -Nologo 1+2' is internally reworked to 'pwsh.exe -No
 If the command is still incompatible with pwsh.exe there's an option to replace (parts of) the command to fix things (in profile.ps1).
 See profile.ps1 for an example: the ambigous command 'measure -s' (for which pwsh will throw an error) is replaced with 'measure -sum'
 
-For fun I changed code from standard main(argc,*argv[]) to something like [this](https://nullprogram.com/blog/2016/01/31/])
 
 # Install 
 
@@ -25,7 +24,7 @@ For fun I changed code from standard main(argc,*argv[]) to something like [this]
 
 # Compiling and Manual Install
 
-You'll need a basic mingw toolchain, for Fedora see: https://fedoraproject.org/wiki/MinGW/Tutorial 
+You'll need golang installd, for Fedora see: https://developer.fedoraproject.org/tech/languages/go/go-installation.html
 
 Clone the git repository.
 

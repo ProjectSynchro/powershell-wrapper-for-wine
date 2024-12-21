@@ -21,3 +21,6 @@
 - v2.2.1 - Fix debugging and revert quote replacement changes.
    - This fixes the edge case seen when running the vcredist binary in the RSI Launcher.
    - The EAC service will fail to install due to how it is invokved, I'll have to rewrite this in something that can use regex a bit better.
+- v3.0.0 - Port wrapper to Golang
+   - Dealing with string manipulation in C was painful, this results in a larger binary but it is far easier to deal with edge cases.
+   - Fully fix [ProjectSynchro/powershell-wrapper-for-wine#2](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/issues/2)

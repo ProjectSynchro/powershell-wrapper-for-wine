@@ -9,10 +9,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Install MinGW toolchain
-        uses: egor-tensin/setup-mingw@v2
-        with:
-          platform: "both"
+      - name: Install Golang toolchain
+        uses: actions/setup-go@v5
       - name: Build Powershell Wrapper (32bit)
         run: |
           make powershell32.exe

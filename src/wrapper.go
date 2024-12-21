@@ -81,83 +81,83 @@ func replaceIncompatibleCommands(cmdline string) string {
 
 // Parse command-line arguments while preserving quotes
 func parseArguments(args []string) ([]string, bool) {
-    var cmdline []string
-    readFromStdin := false
+	var cmdline []string
+	readFromStdin := false
 
-    // Handle options first
-    i := 0
-    for i < len(args) && strings.HasPrefix(args[i], "-") {
-        if !isSingleOrLastOption(args[i]) {
-            i++
-        }
-        if i >= len(args) {
-            break
-        }
-        if args[i] == "-" {
-            if i == len(args)-1 {
-                readFromStdin = true
-                i++
-                continue
-            } else {
-                fmt.Fprintln(os.Stderr, "Invalid usage")
-                os.Exit(1)
-            }
-        }
-        lowerArg := strings.ToLower(args[i])
-        if strings.HasPrefix(lowerArg, "-ve") || strings.HasPrefix(lowerArg, "-nop") {
-            i++
-            continue
-        }
-        cmdline = append(cmdline, args[i])
-        i++
-    }
+	// Handle options first
+	i := 0
+	for i < len(args) && strings.HasPrefix(args[i], "-") {
+		if !isSingleOrLastOption(args[i]) {
+			i++
+		}
+		if i >= len(args) {
+			break
+		}
+		if args[i] == "-" {
+			if i == len(args)-1 {
+				readFromStdin = true
+				i++
+				continue
+			} else {
+				fmt.Fprintln(os.Stderr, "Invalid usage")
+				os.Exit(1)
+			}
+		}
+		lowerArg := strings.ToLower(args[i])
+		if strings.HasPrefix(lowerArg, "-ve") || strings.HasPrefix(lowerArg, "-nop") {
+			i++
+			continue
+		}
+		cmdline = append(cmdline, args[i])
+		i++
+	}
 
-    // Insert '-c' if necessary
-    if i < len(args) && (i == 0 || (!strings.HasPrefix(strings.ToLower(args[i-1]), "-c") &&
-        !strings.HasPrefix(strings.ToLower(args[i-1]), "-enc") &&
-        !strings.HasPrefix(strings.ToLower(args[i-1]), "-f") &&
-        !strings.HasPrefix(strings.ToLower(args[i]), "/c"))) {
-        cmdline = append(cmdline, "-c")
-    }
+	// Insert '-c' if necessary
+	if i < len(args) && (i == 0 || (!strings.HasPrefix(strings.ToLower(args[i-1]), "-c") &&
+		!strings.HasPrefix(strings.ToLower(args[i-1]), "-enc") &&
+		!strings.HasPrefix(strings.ToLower(args[i-1]), "-f") &&
+		!strings.HasPrefix(strings.ToLower(args[i]), "/c"))) {
+		cmdline = append(cmdline, "-c")
+	}
 
-    // For split arguments that contain spaces, add quotes
-    if i < len(args) {
-        if len(args[i:]) > 1 {
-            var cmd strings.Builder
-            for j := i; j < len(args); j++ {
-                if j > i {
-                    cmd.WriteString(" ")
-                }
-                // Quote arguments that contain spaces and aren't already quoted
-                if strings.Contains(args[j], " ") && !strings.HasPrefix(args[j], "\"") {
-                    cmd.WriteString("\"" + args[j] + "\"")
-                } else {
-                    cmd.WriteString(args[j])
-                }
-            }
-            cmdline = append(cmdline, cmd.String())
-        } else {
-            cmdline = append(cmdline, args[i])
-        }
-    }
+	// For split arguments that contain spaces, add quotes
+	if i < len(args) {
+		if len(args[i:]) > 1 {
+			var cmd strings.Builder
+			for j := i; j < len(args); j++ {
+				if j > i {
+					cmd.WriteString(" ")
+				}
+				// Quote arguments that contain spaces and aren't already quoted
+				if strings.Contains(args[j], " ") && !strings.HasPrefix(args[j], "\"") {
+					cmd.WriteString("\"" + args[j] + "\"")
+				} else {
+					cmd.WriteString(args[j])
+				}
+			}
+			cmdline = append(cmdline, cmd.String())
+		} else {
+			cmdline = append(cmdline, args[i])
+		}
+	}
 
-    return cmdline, readFromStdin
+	return cmdline, readFromStdin
 }
 
 // Read from standard input and append to cmdline
 func readFromStdinAppend(cmdline []string) []string {
-    if len(cmdline) == 0 || cmdline[len(cmdline)-1] != "-c" {
-        cmdline = append(cmdline, "-c")
-    }
-    scanner := bufio.NewScanner(os.Stdin)
-    for scanner.Scan() {
-        cmdline = append(cmdline, strings.TrimSpace(scanner.Text()))
-    }
-    if err := scanner.Err(); err != nil {
-        fmt.Fprintf(os.Stderr, "Error reading from stdin: %v\n", err)
-        os.Exit(1)
-    }
-    return cmdline
+	if len(cmdline) == 0 || cmdline[len(cmdline)-1] != "-c" {
+		cmdline = append(cmdline, "-c")
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
+		cmdline = append(cmdline, strings.TrimSpace(scanner.Text()))
+	}
+	if err := scanner.Err(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error reading from stdin: %v\n", err)
+		os.Exit(1)
+	}
+	return cmdline
 }
 
 // Log command lines if debugging is enabled
@@ -226,5 +226,5 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	os.Exit(0)
+	os.Exit(cmd.ProcessState.ExitCode())
 }

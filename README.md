@@ -24,7 +24,7 @@ See profile.ps1 for an example: the ambigous command 'measure -s' (for which pws
 
 # Compiling and Manual Install
 
-You'll need golang installd, for Fedora see: https://developer.fedoraproject.org/tech/languages/go/go-installation.html
+You'll need golang installed, for Fedora see: https://developer.fedoraproject.org/tech/languages/go/go-installation.html
 
 Clone the git repository.
 

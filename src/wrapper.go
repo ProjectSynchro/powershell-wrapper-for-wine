@@ -191,6 +191,7 @@ func main() {
 	// Set environment variables
 	os.Setenv("NO_COLOR", "1")
 	// os.Setenv("TERM", "xterm-mono")
+	os.Setenv("POWERSHELL_UPDATECHECK", "Off")
 
 	if os.Getenv("ENABLE_DEBUG_LOG") == "1" || forceDebug {
 		os.Setenv("LOG_DEBUG", "1")

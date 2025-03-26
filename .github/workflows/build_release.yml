@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   wrapper_build:
-    if: ${{ !github.event.inputs.release }}
+    if: ${{ github.event.inputs.release == false }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,7 +34,7 @@ jobs:
           name: powershell64-wrapper
           path: "powershell64.exe"
   release_build:
-    if: ${{ github.event.inputs.release }}
+    if: ${{ github.event.inputs.release == true }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -45,7 +45,6 @@ jobs:
           packages: upx-ucl
           version: pwsh_wrapper_release
       - name: Build Powershell Wrapper (Dist)
-        if: github.event.inputs.release
         run: |
           make dist
       - name: Upload 32bit Artifact
@@ -59,7 +58,6 @@ jobs:
           name: powershell64-wrapper
           path: "powershell64.exe"
       - name: Upload Dist Artifacts
-        if: github.event.inputs.release
         uses: actions/upload-artifact@v4
         with:
           name: powershell-wrapper-dist

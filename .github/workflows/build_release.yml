@@ -10,7 +10,7 @@ permissions: {}
 
 jobs:
   wrapper_build:
-    if: !github.event.inputs.release
+    if: ${{ !github.event.inputs.release }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,7 +34,7 @@ jobs:
           name: powershell64-wrapper
           path: "powershell64.exe"
   release_build:
-    if: github.event.inputs.release
+    if: ${{ github.event.inputs.release }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

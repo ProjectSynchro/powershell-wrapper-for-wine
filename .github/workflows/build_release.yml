@@ -9,7 +9,7 @@ permissions: {}
 
 jobs:
   wrapper_build:
-    if: github.event.inputs.build_type == 'ci'
+    if: inputs.build_type == 'ci'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -33,7 +33,7 @@ jobs:
           name: powershell64-wrapper
           path: "powershell64.exe"
   release_build:
-    if: github.event.inputs.build_type == 'release'
+    if: inputs.build_type == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

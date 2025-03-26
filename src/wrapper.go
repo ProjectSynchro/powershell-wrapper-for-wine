@@ -11,7 +11,8 @@ import (
 )
 
 // Set true to force debugging on if desired
-var forceDebug = false
+var compileForceDebug string = ""
+var forceDebug bool
 
 // Get the correct PowerShell path based on system architecture or PATH
 func getPowershellPath() string {
@@ -176,6 +177,13 @@ func logCommandLines(originalCmd, processedCmd string) {
 }
 
 func main() {
+	// Check if debugging is forced on at compile-time
+	if compileForceDebug != "" {
+		forceDebug = true
+	} else {
+		forceDebug = false
+	}
+
 	// Debug logging to print received arguments
 	if os.Getenv("ENABLE_DEBUG_LOG") == "1" || forceDebug {
 		fmt.Println("Received arguments:")

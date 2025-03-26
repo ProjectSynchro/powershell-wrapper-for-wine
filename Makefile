@@ -16,6 +16,9 @@ TARGET32 = powershell32.exe
 ZIP_ARCHIVE = powershell-wrapper.zip
 TAR_ARCHIVE = powershell-wrapper.tar.gz
 
+# Build Flags
+BUILD_FLAGS = -ldflags="-s -w" -trimpath
+
 # Phony Targets
 .PHONY: all debug clean dist zip targz
 
@@ -23,17 +26,18 @@ TAR_ARCHIVE = powershell-wrapper.tar.gz
 all: $(TARGET32) $(TARGET64)
 
 # Debug Build
+debug: BUILD_FLAGS := -ldflags="-X main.compileForceDebug=on"
 debug: all
 
 # 64-bit Executable
 $(TARGET64): $(SRCS)
 	@echo "Building 64-bit executable..."
-	GOOS=windows GOARCH=amd64 $(GO) build -x -o $(TARGET64) $(SRCS)
+	GOOS=windows GOARCH=amd64 $(GO) build $(BUILD_FLAGS) -x -o $(TARGET64) $(SRCS)
 
 # 32-bit Executable
 $(TARGET32): $(SRCS)
 	@echo "Building 32-bit executable..."
-	GOOS=windows GOARCH=386 $(GO) build -x -o $(TARGET32) $(SRCS)
+	GOOS=windows GOARCH=386 $(GO) build $(BUILD_FLAGS) -x -o $(TARGET32) $(SRCS)
 
 # Distribution Target
 dist: zip targz

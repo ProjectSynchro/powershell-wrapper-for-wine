@@ -2,15 +2,15 @@ name: Build PowerShell Wrapper
 on:
   workflow_call:
     inputs:
-      release:
+      type:
         required: true
-        type: boolean
-        default: false
+        type: string
+        default: 'false'
 permissions: {}
 
 jobs:
   wrapper_build:
-    if: ${{ github.event.inputs.release == false }}
+    if: github.event.inputs.type == 'ci'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -34,7 +34,7 @@ jobs:
           name: powershell64-wrapper
           path: "powershell64.exe"
   release_build:
-    if: ${{ github.event.inputs.release == true }}
+    if: github.event.inputs.type == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository

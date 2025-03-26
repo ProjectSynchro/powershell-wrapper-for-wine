@@ -5,4 +5,4 @@ jobs:
   ci_run:
     uses: ProjectSynchro/powershell-wrapper-for-wine/.github/workflows/build_release.yml@master
     with:
-      release: false
+      type: 'ci'

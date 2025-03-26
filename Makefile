@@ -20,14 +20,14 @@ TAR_ARCHIVE = powershell-wrapper.tar.gz
 BUILD_FLAGS = -ldflags="-s -w" -trimpath
 
 # Phony Targets
-.PHONY: all debug clean dist zip targz
+.PHONY: all debug clean dist zip targz release
 
 # Default Target
 all: $(TARGET32) $(TARGET64)
 
 # Debug Build
 debug: BUILD_FLAGS := -ldflags="-X main.compileForceDebug=on"
-debug: all
+debug: clean all
 
 # 64-bit Executable
 $(TARGET64): $(SRCS)
@@ -43,7 +43,7 @@ $(TARGET32): $(SRCS)
 dist: zip targz
 
 # Create ZIP Archive
-zip: $(TARGET32) $(TARGET64)
+zip: release
 	@mkdir -p $(DIST_ZIP_DIR)/32 $(DIST_ZIP_DIR)/64
 	@echo "Copying executables and profile.ps1 to ZIP distribution directories..."
 	cp $(TARGET32) $(DIST_ZIP_DIR)/32/powershell.exe
@@ -54,7 +54,7 @@ zip: $(TARGET32) $(TARGET64)
 	@echo "ZIP archive created at $(ZIP_ARCHIVE)"
 
 # Create TAR.GZ Archive
-targz: $(TARGET32) $(TARGET64)
+targz: release
 	@mkdir -p $(DIST_TAR_DIR)/32 $(DIST_TAR_DIR)/64
 	@echo "Copying executables and profile.ps1 to TAR.GZ distribution directories..."
 	cp $(TARGET32) $(DIST_TAR_DIR)/32/powershell.exe
@@ -63,6 +63,21 @@ targz: $(TARGET32) $(TARGET64)
 	@echo "Creating TAR.GZ archive..."
 	tar -czvf $(TAR_ARCHIVE) -C $(DIST_TAR_DIR) profile.ps1 32 64
 	@echo "TAR.GZ archive created at $(TAR_ARCHIVE)"
+
+# Release Target
+release: clean all
+	@echo "Selecting UPX command..."
+	@if command -v upx >/dev/null 2>&1; then \
+		UPXCMD=upx; \
+	elif command -v upx-ucl >/dev/null 2>&1; then \
+		UPXCMD=upx-ucl; \
+	else \
+		echo "Error: Neither upx nor upx-ucl found."; \
+		exit 1; \
+	fi; \
+	echo "Compressing binaries with $$UPXCMD..."; \
+	$$UPXCMD --best --lzma $(TARGET32) $(TARGET64)
+	@echo "Binaries compressed."
 
 # Clean Build and Distribution Artifacts
 clean:

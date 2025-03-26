@@ -9,7 +9,7 @@ jobs:
   build_release:
     uses: ProjectSynchro/powershell-wrapper-for-wine/.github/workflows/build_release.yml@master
     with:
-      type: 'release'
+      build_type: 'release'
   create_release:
     permissions:
       contents: write

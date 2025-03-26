@@ -5,7 +5,6 @@ on:
       type:
         required: true
         type: string
-        default: 'false'
 permissions: {}
 
 jobs:

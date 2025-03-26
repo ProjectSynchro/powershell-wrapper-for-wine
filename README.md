@@ -1,3 +1,7 @@
+[![CI Testing](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/ci.yml/badge.svg)](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/ci.yml)
+
+[![Powershell Wrapper Release](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/create_release.yml/badge.svg)](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/create_release.yml)
+
 # powershell-wrapper for wine
 
 Wrapper for powershell.exe from wine ( this helps fix the RSI Launcher, when it creates directories. ).

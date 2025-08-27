@@ -202,7 +202,12 @@ function Start-Process {
 
         # Log process start success
         if ($process) {
-            Write-Message "Process started successfully: $FilePath (PID: $($process.Id))"
+            if ($processStartInfo.UseShellExecute -and ($processStartInfo.Verb -eq 'runas')) {
+            Write-Message "Elevated process started successfully: $FilePath (PID: $($process.Id))"
+            }
+            else {
+                Write-Message "Non-elevated process started successfully: $FilePath (PID: $($process.Id))"
+            }
         }
 
         # If PassThru is specified, return the process object

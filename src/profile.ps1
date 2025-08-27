@@ -161,18 +161,19 @@ function Start-Process {
 
         # Handle input/output redirection
         if ($RedirectStandardOutput) {
-            Write-Message "Redirecting standard output to: $RedirectStandardOutput"
+            Write-Message "Redirecting standard output"
             $processStartInfo.RedirectStandardOutput = $true
-            $processStartInfo.StandardOutputFileName = $RedirectStandardOutput
+            $processStartInfo.StandardOutputEncoding = [System.Text.Encoding]::UTF8
         }
         if ($RedirectStandardError) {
-            Write-Message "Redirecting standard error to: $RedirectStandardError"
+            Write-Message "Redirecting standard error"
             $processStartInfo.RedirectStandardError = $true
-            $processStartInfo.StandardErrorFileName = $RedirectStandardError
+            $processStartInfo.StandardErrorEncoding = [System.Text.Encoding]::UTF8
         }
         if ($RedirectStandardInput) {
-            Write-Message "Redirecting standard input from: $RedirectStandardInput"
+            Write-Message "Redirecting standard input"
             $processStartInfo.RedirectStandardInput = $true
+            $processStartInfo.StandardInputEncoding = [System.Text.Encoding]::UTF8
         }
 
         # If credentials provided, load them

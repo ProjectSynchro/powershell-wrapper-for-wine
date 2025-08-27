@@ -137,7 +137,19 @@ function Start-Process {
         $processStartInfo = New-Object System.Diagnostics.ProcessStartInfo
         $processStartInfo.FileName = $FilePath
         $processStartInfo.Arguments = $ArgumentList -join ' '
-        $processStartInfo.UseShellExecute = $false
+
+        # Set UseShellExecute to true if the verb is 'runas'
+        if ($Verb -eq 'runas') {
+            $processStartInfo.UseShellExecute = $true
+        } else {
+            $processStartInfo.UseShellExecute = $false
+        }
+
+        # Set verb
+        if ($Verb) {
+            Write-Message "Setting verb: $Verb"
+            $processStartInfo.Verb = $Verb
+        }
 
         # Set window style if needed
         switch ($WindowStyle) {
@@ -151,12 +163,6 @@ function Start-Process {
         if ($WorkingDirectory) {
             Write-Message "Setting working directory: $WorkingDirectory"
             $processStartInfo.WorkingDirectory = $WorkingDirectory
-        }
-
-        # Set verb if provided
-        if ($Verb) {
-            Write-Message "Setting verb: $Verb"
-            $processStartInfo.Verb = $Verb
         }
 
         # Handle input/output redirection

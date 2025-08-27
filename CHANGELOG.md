@@ -28,3 +28,4 @@
 - v3.0.2 - Hide out-of-date powershell core warning message
 - v3.0.3 - Reduce size of binaries and fix debug builds (You can still use `ENABLE_DEBUG_LOG=1` at runtime)
 - v3.0.4 - Further reduce the size of binaries
+- v3.0.5 - Fix elevating processes with the `RunAs` verb. When starting a process with `-Verb RunAs` the process should now be elevated correctly.

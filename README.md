@@ -1,3 +1,6 @@
+> ⚠️ **Notice:**  
+> This project has migrated to **[Codeberg](https://codeberg.org/Synchro/powershell-wrapper-for-wine)**.  
+
 [![CI Testing](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/ci.yml/badge.svg)](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/ci.yml)
 
 [![Powershell Wrapper Release](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/create_release.yml/badge.svg)](https://github.com/ProjectSynchro/powershell-wrapper-for-wine/actions/workflows/create_release.yml)
